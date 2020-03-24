@@ -1,0 +1,141 @@
+<html><head>
+<script type="text/javascript">
+
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+
+const suits = ["hearts","spades","clubs","diamonds"]
+const cards = ["Ace","2","3","4","5","6","7","8","9","10","Jack","Queen","King"]
+const deck = []
+suits.forEach(suit =>{
+    cards.forEach(card =>{
+        deck.push({"suit":suit,"value":card, "inPlay":true})
+    })
+})
+shuffle(deck)
+
+function drawCircle(){
+let rotation=0
+    deck.forEach((card,index) =>{
+    rotation= rotation+7
+    let div = document.createElement('figure');
+    //div.textContent = `${card.suit} ${card.value}`;
+    div.setAttribute('class','card');
+    if(card.suit == "hearts" || card.suit=="diamonds"){
+    div.classList.add('red');
+    } else {
+        div.classList.add('black');
+    }
+    div.style.zIndex=index
+    let fill = document.querySelectorAll("#pattern-cubes");
+
+    div.style.fill = fill
+    div.style.webkitTransform = `rotate(${rotation}deg)`;
+    div.setAttribute('id',index)
+
+        document.querySelector('#game').appendChild(div)
+  
+})
+}
+window.onload = ()=>{
+
+drawCircle();
+
+let cardElements = document.querySelectorAll('.card')
+Array.from(cardElements).forEach(function(element) {
+    element.addEventListener('click', (card)=>{
+    let target = card.target
+    const chosen = deck[card.target.id]
+    let resultText = (`${chosen.value} of ${chosen.suit}`  )
+    chosen.inPlay=false 
+    target.parentNode.removeChild(target)
+    document.querySelector('#result').innerText = `${resultText}`
+    const logger = deck.filter(card => card.inPlay ==true);
+
+console.log(logger);
+
+});
+
+})
+}
+</script>
+<style type="text/css">
+.card {
+      width: 85px;
+      height: 150px;
+      border: black 1.5px solid;
+      border-radius: 5px;
+      background: repeating-radial-gradient(
+  circle,
+  purple,
+  purple 10px,
+  #4b026f 10px, 
+  #4b026f 20px
+);
+      position:absolute;
+      margin:0;
+      
+      padding:0;
+
+      transform-origin: 220px center;
+      background-color:white;
+      overflow:hidden;
+    }
+
+.red {
+    color: red;
+}
+
+.black {
+    color:black;
+}
+
+article {
+    margin-top:200px;
+    display:flex;
+    align-items:center;
+}
+
+#game {
+    margin-right:auto;
+    width:50%;
+
+}
+
+#result {
+   
+  
+}
+
+</style>
+</head>
+
+<body>
+<article>
+<div id="game">
+
+
+</div>
+<div id="result"></div>
+</article>
+
+
+</body>
+
+</html>
