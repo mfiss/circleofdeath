@@ -1,141 +1,161 @@
-<html><head>
-<script type="text/javascript">
+<html>
+  <head>
+      <script type="text/javascript">
 
-function shuffle(array) {
-  var currentIndex = array.length, temporaryValue, randomIndex;
+      function shuffle(array) {
+      var currentIndex = array.length, temporaryValue, randomIndex;
 
-  // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
+      // While there remain elements to shuffle...
+      while (0 !== currentIndex) {
 
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
+          // Pick a remaining element...
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex -= 1;
 
-    // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
+          // And swap it with the current element.
+          temporaryValue = array[currentIndex];
+          array[currentIndex] = array[randomIndex];
+          array[randomIndex] = temporaryValue;
+      }
 
-  return array;
-}
+      return array;
+      }
 
-const suits = ["hearts","spades","clubs","diamonds"]
-const cards = ["Ace","2","3","4","5","6","7","8","9","10","Jack","Queen","King"]
-const deck = []
-suits.forEach(suit =>{
-    cards.forEach(card =>{
-        deck.push({"suit":suit,"value":card, "inPlay":true})
-    })
-})
-shuffle(deck)
+      const suits = ["hearts","spades","clubs","diamonds"]
+      const cards = ["Ace","2","3","4","5","6","7","8","9","10","Jack","Queen","King"]
+      const deck = []
+      suits.forEach(suit =>{
+          cards.forEach(card =>{
+              deck.push({"suit":suit,"value":card, "inPlay":true})
+          })
+      })
+      shuffle(deck)
 
-function drawCircle(){
-let rotation=0
-    deck.forEach((card,index) =>{
-    rotation= rotation+7
-    let div = document.createElement('figure');
-    //div.textContent = `${card.suit} ${card.value}`;
-    div.setAttribute('class','card');
-    if(card.suit == "hearts" || card.suit=="diamonds"){
-    div.classList.add('red');
-    } else {
-        div.classList.add('black');
-    }
-    div.style.zIndex=index
-    let fill = document.querySelectorAll("#pattern-cubes");
+      function drawCircle(){
+      let rotation=0
+          deck.forEach((card,index) =>{
+          rotation= rotation+7
+          let div = document.createElement('figure');
+          //div.textContent = `${card.suit} ${card.value}`;
+          div.setAttribute('class','card');
+          if(card.suit == "hearts" || card.suit=="diamonds"){
+          div.classList.add('red');
+          } else {
+              div.classList.add('black');
+          }
+          div.style.zIndex=index
+          let fill = document.querySelectorAll("#pattern-cubes");
 
-    div.style.fill = fill
-    div.style.webkitTransform = `rotate(${rotation}deg)`;
-    div.setAttribute('id',index)
+          div.style.fill = fill
+          div.style.webkitTransform = `translate(-18vw, -6vw) rotate(${rotation}deg)`;
+          div.setAttribute('id',index)
 
-        document.querySelector('#game').appendChild(div)
-  
-})
-}
-window.onload = ()=>{
-
-drawCircle();
-
-let cardElements = document.querySelectorAll('.card')
-Array.from(cardElements).forEach(function(element) {
-    element.addEventListener('click', (card)=>{
-    let target = card.target
-    const chosen = deck[card.target.id]
-    let resultText = (`${chosen.value} of ${chosen.suit}`  )
-    chosen.inPlay=false 
-    target.parentNode.removeChild(target)
-    document.querySelector('#result').innerText = `${resultText}`
-    const logger = deck.filter(card => card.inPlay ==true);
-
-console.log(logger);
-
-});
-
-})
-}
-</script>
-<style type="text/css">
-.card {
-      width: 85px;
-      height: 150px;
-      border: black 1.5px solid;
-      border-radius: 5px;
-      background: repeating-radial-gradient(
-  circle,
-  purple,
-  purple 10px,
-  #4b026f 10px, 
-  #4b026f 20px
-);
-      position:absolute;
-      margin:0;
+              document.querySelector('#game').appendChild(div)
       
-      padding:0;
+      })
+      }
+      window.onload = ()=>{
 
-      transform-origin: 220px center;
-      background-color:white;
-      overflow:hidden;
-    }
+      drawCircle();
 
-.red {
-    color: red;
-}
+      let cardElements = document.querySelectorAll('.card')
+      Array.from(cardElements).forEach(function(element) {
+          element.addEventListener('click', (card)=>{
+          let target = card.target
+          const chosen = deck[card.target.id]
+          let resultText = (`${chosen.value} of ${chosen.suit}`  )
+          chosen.inPlay=false 
+          target.parentNode.removeChild(target)
+          document.querySelector('#result').innerText = `${resultText}`
+          const logger = deck.filter(card => card.inPlay ==true);
 
-.black {
-    color:black;
-}
+      console.log(logger);
 
-article {
-    margin-top:200px;
-    display:flex;
-    align-items:center;
-}
+      });
 
-#game {
-    margin-right:auto;
-    width:50%;
+      })
+      }
+      </script>
+      <style type="text/css">
+      .card {
+          cursor: pointer;
+          width: 10vw;
+          height: 15vw;
+          border: black 1.5px solid;
+          border-radius: .5rem;
+          background: repeating-radial-gradient(
+            circle,
+            purple,
+            purple 1vw,
+            #4b026f 1vw, 
+            #4b026f 2vw
+            );
+          position:absolute;
+          margin:0;
+          padding:0;
+          transform-origin: 20vw center;
+          background-color:white;
+          overflow:hidden;
+        }
 
-}
+        .card:hover {
+          box-shadow: 0 0 .5rem white;
+        }
 
-#result {
-   
-  
-}
+      .red {
+        color: red;
+      }
 
-</style>
-</head>
+      .black {
+        color:black;
+      }
 
-<body>
-<article>
-<div id="game">
+      section {
+        max-width: 1800px;
+        display:flex;
+        align-items:stretch;
+        height: 100%;
+        position: relative;
+        background: green;
+      }
 
+      .game-container {
+        margin:auto;
+        background: violet;
+        display: flex;
+        justify-content: space-around;
 
-</div>
-<div id="result"></div>
-</article>
+      }
 
+      #game {
+        width: 50px;
+        height: 50px;
+        background: black;
+      }
 
-</body>
+      #menu {
+        margin:auto;
+      }
 
+      #result {
+      
+      
+      }
+
+      </style>
+  </head>
+
+  <body>
+  <section>
+    <div class="game-container">
+      <div id="game">
+
+      </div>
+    </div>
+      <div id="menu">
+          
+      </div>
+  <div id="result"></div>
+  </section>
+  </body>
 </html>
