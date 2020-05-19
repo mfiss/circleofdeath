@@ -1,9 +1,4 @@
-import React, { useRef, useState, Suspense } from 'react'
-import { Canvas, useFrame } from 'react-three-fiber'
-import Cards from './components/Cards'
-import Lights from './components/Lights'
-import Environment from './components/Environment'
-import Text from './components/Text'
+import React, { useState } from 'react'
 import styled from 'styled-components';
 import SkullGif from '../skull.gif';
 
@@ -70,7 +65,7 @@ const NewGameSetup = ({startGame}) => {
   const sanitizeName = (value) => {
     setError([])
     let funValue = value
-    if (funValue.match(/[^a-z0-9áéíóúñü \.,_-]/gim,"")) {
+    if (funValue.match(/[^a-z0-9áéíóúñü .,_-]/gim,"")) {
       setError('Wow such fancy characters. Try some regular letters, nerd')
       funValue = 'Nerd'
     }
@@ -81,7 +76,7 @@ const NewGameSetup = ({startGame}) => {
       funValue= 'Dingus'
     }
 
-    const sanitizedName = funValue.replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"").trim().slice(0, 15)
+    const sanitizedName = funValue.replace(/[^a-z0-9áéíóúñü .,_-]/gim,"").trim().slice(0, 15)
     setName(sanitizedName);
   }
 
@@ -111,14 +106,6 @@ export default ({startGame}) => {
 
  return (
     <NewGameBackground id="new-game-background" >
-          {/* <Canvas>
-        <Suspense fallback={null}>
-          <Text />
-          <Cards />
-          <Lights />
-          <Environment />
-        </Suspense>
-      </Canvas> */}
       <TitleBackground>
         <Skull />
           <GameTitle>Circle of Death</GameTitle>

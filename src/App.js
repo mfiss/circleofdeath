@@ -8,28 +8,6 @@ import Deck from './deck'
 import NewGame from './newGame'
 import globalStyles from './globalStyles'
 
- 
-// Uncomment once this stuff is live
-
-// export const ws = new WebSocket('websocket url')
-
-// this.ws.onopen = () => {
-//   // on connecting, do nothing but log it to the console
-//   console.log('connected')
-//   }
-
-//   this.ws.onmessage = evt => {
-//   // listen to data sent from the websocket server
-//   const message = JSON.parse(evt.data)
-//   this.setState({dataFromServer: message})
-//   console.log(message)
-//   }
-
-// this.ws.onclose = () => {
-//   console.log('disconnected')
-//   // automatically try to reconnect on connection loss
-//   }
-
 export const Table = styled.div`
   margin: auto;
   max-width: 1800px;
