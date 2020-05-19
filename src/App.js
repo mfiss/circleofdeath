@@ -122,7 +122,11 @@ export const Game = () => {
     { card: '2', text: `${name} drink 2!` },
   ]
 
-  const startGame = () => { 
+  const startGame = () => {
+    // Do firestore stuff to get the code
+    const gameRoute = 'testGame'
+
+    window.location.pathname = gameRoute
     setNewGame(false)
   }
 
