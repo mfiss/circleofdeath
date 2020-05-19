@@ -1,35 +1,13 @@
-import React, { useState, useEffect } from "react";
-import styled, { ThemeProvider } from "styled-components";
-import Status from "./status";
-import Players from "./players";
-import Paper from "./paper";
-import Rules from "./rules";
-import Deck from "./deck";
-import NewGame from "./newGame";
-import globalStyles from "./globalStyles";
-
+import React, { useState } from 'react';
+import styled, { ThemeProvider } from 'styled-components';
+import Status from './status'
+import Players from './players'
+import Paper from './paper';
+import Rules from './rules';
+import Deck from './deck'
+import NewGame from './newGame'
+import globalStyles from './globalStyles'
 import { firestore } from "./firebase";
-
-// Uncomment once this stuff is live
-
-// export const ws = new WebSocket('websocket url')
-
-// this.ws.onopen = () => {
-//   // on connecting, do nothing but log it to the console
-//   console.log('connected')
-//   }
-
-//   this.ws.onmessage = evt => {
-//   // listen to data sent from the websocket server
-//   const message = JSON.parse(evt.data)
-//   this.setState({dataFromServer: message})
-//   console.log(message)
-//   }
-
-// this.ws.onclose = () => {
-//   console.log('disconnected')
-//   // automatically try to reconnect on connection loss
-//   }
 
 export const Table = styled.div`
   margin: auto;
@@ -81,10 +59,6 @@ const fakePlayers = [
 ];
 
 export const Game = () => {
-  const [status, setStatus] = useState(["Start picking cards!"]);
-  const [newGame, setNewGame] = useState(true);
-  const [playerState, setPlayerState] = useState(fakePlayers);
-
   useEffect(() => {
     /**
      * getGame
@@ -99,6 +73,30 @@ export const Game = () => {
         const { players } = doc.data();
         setPlayerState([...players]);
       });
+  const path = window.location.pathname
+  const gameRoute = path !== '/' && path  
+  const [sessionPlayerName, setSessionPlayerName] = useState(null)
+  // Either version of newGame will prompt user for a name if one doesn't exist yet
+  const [newGame, setNewGame ] = useState(!sessionPlayerName)
+
+  const [status, setStatus] = useState(['Start picking cards!'])
+  const [playerState, setPlayerState] = useState(fakePlayers)
+
+  const currentPlayer = playerState.find(p => p.current)
+  const { name } = currentPlayer
+  const currentPlayerIndex = playerState.map(p => p.current).indexOf(true)  
+  
+  const changePlayer = (card) => setPlayerState(playerState.map((player,index) => {
+    const thumbMaster = card.card === 'Jack'
+    const questionMaster = card.card === 'Queen'
+    const isCurrentPlayer = index === currentPlayerIndex
+    const newPlayerState = player
+
+    // Player at the next index goes next, or if we're at the end of the array, it's the player at index 0
+    newPlayerState.current = (index === currentPlayerIndex + 1) || (currentPlayerIndex === (playerState.length - 1) && !index)
+
+    if (thumbMaster) {
+      newPlayerState.thumbMaster = isCurrentPlayer
     }
     // gameId will be from the URL route
     getGame("6669");
@@ -147,30 +145,37 @@ export const Game = () => {
   };
 
   const statusResponseTemplate = [
-    { card: "Ace", text: "WATERFALL!" },
-    { card: "King", text: "Make a rule." },
-    { card: "Queen", text: `${name} is now the Question Master!` },
-    { card: "Jack", text: `${name} is now the Thumb Master!` },
-    { card: "10", text: "Category!" },
-    { card: "9", text: "Rhyme!" },
-    { card: "8", color: "red", text: `${name} drink!` },
-    { card: "8", color: "black", text: `${name} give out drinks!` },
-    { card: "7", color: "red", text: `${name} drink!` },
-    { card: "7", color: "black", text: `${name} give out drinks!` },
-    { card: "6", color: "red", text: `${name} drink!` },
-    { card: "6", color: "black", text: `${name} give out drinks!` },
-    { card: "5", text: `${name} drink 5!` },
-    { card: "4", text: `${name} drink 4!` },
-    { card: "3", text: `${name} drink 3!` },
-    { card: "2", text: `${name} drink 2!` },
-  ];
+    { card: 'Ace', text: 'WATERFALL!' },
+    { card: 'King', text: 'Make a rule.' },
+    { card: 'Queen', text: `${name} is now the Question Master!` },
+    { card: 'Jack', text: `${name} is now the Thumb Master!`},
+    { card: '10', text: 'Category!' },
+    { card: '9', text: 'Rhyme!' },
+    { card: '8', color: 'red', text: `${name} drink!` },
+    { card: '8', color: 'black', text: `${name} give out drinks!` },
+    { card: '7', color: 'red', text: `${name} drink!` },
+    { card: '7', color: 'black', text: `${name} give out drinks!` },
+    { card: '6', color: 'red', text: `${name} drink!` },
+    { card: '6', color: 'black', text: `${name} give out drinks!` },
+    { card: '5', text: `${name} drink 5!` },
+    { card: '4', text: `${name} drink 4!` },
+    { card: '3', text: `${name} drink 3!` },
+    { card: '2', text: `${name} drink 2!` },
+  ]
 
-  const startGame = () => {
-    setNewGame(false);
-  };
-
+  const startGame = (gameRoute) => {
+    let privateGameRoute = gameRoute
+    if (!gameRoute) {
+    // If there's no game route, we need to do firestore stuff to create one
+    privateGameRoute = '/testGame'
+    }
+   // Add sessionPlayerName to firestore here
+    window.history.pushState('','',privateGameRoute)
+    setNewGame(false)
+  }
+  
   if (newGame) {
-    return <NewGame startGame={startGame} />;
+    return  <NewGame startGame={startGame} gameRoute={gameRoute} setSessionPlayerName={setSessionPlayerName} />
   } else {
     return (
       <Table>
