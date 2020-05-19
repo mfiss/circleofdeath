@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components';
-import SkullGif from '../skull.gif';
+import SkullGif from './skull.gif';
 
 export const NewGameBackground = styled.div`
   font-family: 'UnifrakturMaguntia', cursive;
@@ -39,21 +39,26 @@ export const NewGameButton = styled.button`
   color: white;
   border: none;
   background: none;
-  font-size: 2rem;
+  font-size: 1.5rem;
 `
 
 export const NameInput = styled.input`
   font-family: 'UnifrakturMaguntia', cursive;
   font-size: 2rem;
   background: black;
-  margin: 1rem 0 1rem 0;
+  margin: auto;
+  margin-bottom: 1rem;
   color: white;
   text-align: center;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 50%;
 `
 
 const Error = styled.div`
   color: red;
-  font-size: 1.5rem
+  font-size: 1.25rem
 `
 
 const Skull = () => <img src={SkullGif} alt="Spinning Skull" />
