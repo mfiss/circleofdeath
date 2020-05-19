@@ -80,8 +80,12 @@ const fakePlayers = [
 ]
 
 export const Game = () => {
+  const path = window.location.pathname
+  const gameRoute = path !== '/' && path  
+  // Only start a new game if there is not a game route in the URL
+  const [newGame, setNewGame ] = useState(!gameRoute)
+
   const [status, setStatus] = useState(['Start picking cards!'])
-  const [newGame, setNewGame ] = useState(true)
   const [playerState, setPlayerState] = useState(fakePlayers)
 
   const currentPlayer = playerState.find(p => p.current)
