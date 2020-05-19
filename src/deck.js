@@ -89,7 +89,7 @@ export default ({updateStatus}) => {
     }
     return array;
   }
-
+  // Here's where firestore will need to update the deck state every time a card is played
   const [deckState, setDeckState] = useState(shuffle(deckArray))
   const [ discardPile, setDiscardPile ] = useState([])
 
