@@ -63,7 +63,7 @@ const Error = styled.div`
 
 const Skull = () => <img src={SkullGif} alt="Spinning Skull" />
 
-const NewGameSetup = ({startGame}) => {
+const NewGameSetup = ({startGame, gameRoute, setSessionPlayerName}) => {
   const [name, setName] = useState('')
   const [error, setError] = useState([])
   
@@ -83,12 +83,13 @@ const NewGameSetup = ({startGame}) => {
 
     const sanitizedName = funValue.replace(/[^a-z0-9áéíóúñü .,_-]/gim,"").trim().slice(0, 15)
     setName(sanitizedName);
+    setSessionPlayerName(sanitizedName)
   }
 
-  const checkForName = () => {
+  const checkForName = (gameRoute) => {
     if (name) {
       // Do stuff to actually start a game
-      startGame()
+      startGame(gameRoute)
     } else {
       setError('Enter a name first')
     }
@@ -98,23 +99,30 @@ const NewGameSetup = ({startGame}) => {
     <>
     Enter Name:
     <NameInput value={name} onChange={({target: { value } }) => sanitizeName(value)} />
-    
-    <NewGameButton onClick={() => checkForName()}>
-      Start New Game
-    </NewGameButton>
+    {gameRoute 
+    ? (
+      <NewGameButton onClick={() => checkForName(gameRoute)}>
+        Join Game
+      </NewGameButton>
+    ) : (
+      <NewGameButton onClick={() => checkForName(gameRoute)}>
+        Start New Game
+      </NewGameButton>
+    ) 
+  }
     <Error>{error}</Error>
     </>
   )
 }
 
-export default ({startGame}) => {
+export default ({startGame, gameRoute, setSessionPlayerName }) => {
 
  return (
     <NewGameBackground id="new-game-background" >
       <TitleBackground>
         <Skull />
           <GameTitle>Circle of Death</GameTitle>
-      <NewGameSetup startGame={startGame}/>
+      <NewGameSetup startGame={startGame} gameRoute={gameRoute} setSessionPlayerName={setSessionPlayerName} />
       </TitleBackground>
     </NewGameBackground>
   )

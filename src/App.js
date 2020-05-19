@@ -60,8 +60,9 @@ const fakePlayers = [
 export const Game = () => {
   const path = window.location.pathname
   const gameRoute = path !== '/' && path  
-  // Only start a new game if there is not a game route in the URL
-  const [newGame, setNewGame ] = useState(!gameRoute)
+  const [sessionPlayerName, setSessionPlayerName] = useState(null)
+  // Either version of newGame will prompt user for a name if one doesn't exist yet
+  const [newGame, setNewGame ] = useState(!sessionPlayerName)
 
   const [status, setStatus] = useState(['Start picking cards!'])
   const [playerState, setPlayerState] = useState(fakePlayers)
@@ -122,16 +123,19 @@ export const Game = () => {
     { card: '2', text: `${name} drink 2!` },
   ]
 
-  const startGame = () => {
-    // Do firestore stuff to get the code
-    const gameRoute = 'testGame'
-
-    window.location.pathname = gameRoute
+  const startGame = (gameRoute) => {
+    let privateGameRoute = gameRoute
+    if (!gameRoute) {
+    // If there's no game route, we need to do firestore stuff to create one
+    privateGameRoute = '/testGame'
+    }
+   // Add sessionPlayerName to firestore here
+    window.history.pushState('','',privateGameRoute)
     setNewGame(false)
   }
-
+  
   if (newGame) {
-    return  <NewGame startGame={startGame} />
+    return  <NewGame startGame={startGame} gameRoute={gameRoute} setSessionPlayerName={setSessionPlayerName} />
   } else {
     return (
         <Table>
