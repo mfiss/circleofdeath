@@ -23,12 +23,6 @@ export default ({cardTexture,index}) => {
   )
 
   const c = (-6 + (index * .1))
-  
-  // position
-  const position = useMemo(
-    () => [0, 0, 0],
-    [0]
-  )
 
   // random time mod factor
   const timeMod = useMemo(() => random(0.1, 4, true), [])
@@ -42,22 +36,22 @@ export default ({cardTexture,index}) => {
   }, [c, isActive])
 
   // raf loop
-  // useFrame(() => {
+  useFrame(() => {
     
     // mesh.current.rotation.y += 0.001
 
-    // if (mesh.current.position.y < 5) {
-    //   mesh.current.position.y += .01 * index / 10
-    // } else {
-    //   mesh.current.position.y += -3
-    // }
+    if (mesh.current.position.y < 4) {
+      mesh.current.position.y += .1
+    } else {
+      mesh.current.position.y += -10.2
+    }
         
-    // if (isActiveRef.current) {
-    //   time.current += 0.03
-    //   // mesh.current.position.y = position[1] + Math.sin(time.current) * 0.4
-    //   mesh.current.position.x = Math.sin(time.current) * 0.4
-    // }
-  // })
+    if (isActiveRef.current) {
+      time.current += 0.03
+      // mesh.current.position.y = position[1] + Math.sin(time.current) * 0.4
+      mesh.current.position.x = Math.sin(time.current) * 0.4
+    }
+  })
 
   // Events
   const onHover = useCallback(
@@ -80,7 +74,7 @@ export default ({cardTexture,index}) => {
     <group 
       ref={mesh} 
       rotation={[0,0,0]}
-      position={position}
+      position={[0,(-18 + (index * 1.3)),0]}
       onClick={(e) => onClick(e)}
       onPointerOver={(e) => onHover(e, true)}
       onPointerOut={(e) => onHover(e, false)}

@@ -132,22 +132,34 @@ Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
 export default () => {
   const group = useRef()
 
-  // useFrame(() => {
-  //   group.current.rotation.y += 0.005
-  // })
+  useFrame(() => {
+    group.current.rotation.z += 0.005
+  })
 
   const cardGroups = chunk(cards, 8)
   console.log(cardGroups)
 
+  const Mirrored = ({index}) => (
+    <>
+    <group  rotation={[1.4,0,0]} position={[0,1, 0]}>
+      {cardGroups[0].map((card,j) => (
+                <Card key={j} cardTexture={card} index={j} rotation={[0,0,0]} position={[0,0,0]} />
+              ))}
+    </group>
+
+    <group  rotation={[1.5,-3.1,0]} position={[0, -1, 0]}>
+      {cardGroups[1].map((card,j) => (
+                <Card key={j} cardTexture={card} index={j} rotation={[0,0,0]} position={[0,0,0]} />
+              ))}
+    </group>
+  </>
+  )
+
   return (
-    <group ref={group} rotation={[0,0,0]} position={[0,0,0]}>
-    {cardGroups.map((grp,i) => (
-      <group  rotation={[1,(3- (i/1.5)),0]} position={[(-3.5 + (i +.4)), (i % 4), 0]}>
-        {grp.map((card,j) => (
-          <Card key={j} cardTexture={card} index={j} rotation={[0,0,0]} position={[0,0,0]} />
-        ))}
-      </group>
-    ))}
+    <group ref={group} rotation={[0, 0, 0]} position={[0,0,0]}>
+      <Mirrored index={0} />
+      <Mirrored index={1} />
+      <Mirrored index={2} />
     </group>
   )
 }

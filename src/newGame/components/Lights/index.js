@@ -14,9 +14,9 @@ export default () => {
     <group>
       {/* <FakeSphere /> */}
       {/* <ambientLight /> */}
-      {/* <pointLight distance={60} intensity={.1} color="white" /> */}
-        <spotLight intensity={1} position={[0, 0, 70]} penumbra={1} color="white" />
-        <ambientLight color={0x404040} intensity={1} />
+        {/* <pointLight distance={100} intensity={3} color="blue" /> */}
+        <spotLight intensity={5} position={[1, 1, -1000]} penumbra={1} color="white" />
+        <ambientLight color={0x404040} intensity={3} />
     </group>
   )
 }
