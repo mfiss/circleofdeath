@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import styled, { ThemeProvider } from 'styled-components';
-import Status from './status'
-import Players from './players'
-import Paper from './paper';
-import Rules from './rules';
-import Deck from './deck'
-import NewGame from './newGame'
-import globalStyles from './globalStyles'
-import { firestore } from "./firebase";
+import React, { useState } from "react";
+import styled, { ThemeProvider } from "styled-components";
+import Status from "./status";
+import Players from "./players";
+import Paper from "./paper";
+import Rules from "./rules";
+import Deck from "./deck";
+import NewGame from "./newGame";
+import globalStyles from "./globalStyles";
 
 export const Table = styled.div`
   margin: auto;
@@ -23,7 +22,7 @@ const Column = styled.div`
   flex-direction: column;
 
   @media only screen and (min-width: ${({ theme }) =>
-      theme.largeBreakpoint}px) {
+    theme.largeBreakpoint}px) {
     width: 50%;
   }
 `;
@@ -59,53 +58,16 @@ const fakePlayers = [
 ];
 
 export const Game = () => {
-  useEffect(() => {
-    /**
-     * getGame
-     *
-     * @param gameId {String} string from URL
-     * @returns {object} current snapshot from the firestore db
-     */
-
-    async function getGame(gameId) {
-      const snapshot = firestore.collection("games").doc(gameId);
-      snapshot.onSnapshot((doc) => {
-        const { players } = doc.data();
-        setPlayerState([...players]);
-      });
-  const path = window.location.pathname
-  const gameRoute = path !== '/' && path  
-  const [sessionPlayerName, setSessionPlayerName] = useState(null)
+  const path = window.location.pathname;
+  const gameRoute = path !== "/" && path.slice(1);
+  const [sessionPlayerName, setSessionPlayerName] = useState(null);
   // Either version of newGame will prompt user for a name if one doesn't exist yet
-  const [newGame, setNewGame ] = useState(!sessionPlayerName)
-
-  const [status, setStatus] = useState(['Start picking cards!'])
-  const [playerState, setPlayerState] = useState(fakePlayers)
-
-  const currentPlayer = playerState.find(p => p.current)
-  const { name } = currentPlayer
-  const currentPlayerIndex = playerState.map(p => p.current).indexOf(true)  
-  
-  const changePlayer = (card) => setPlayerState(playerState.map((player,index) => {
-    const thumbMaster = card.card === 'Jack'
-    const questionMaster = card.card === 'Queen'
-    const isCurrentPlayer = index === currentPlayerIndex
-    const newPlayerState = player
-
-    // Player at the next index goes next, or if we're at the end of the array, it's the player at index 0
-    newPlayerState.current = (index === currentPlayerIndex + 1) || (currentPlayerIndex === (playerState.length - 1) && !index)
-
-    if (thumbMaster) {
-      newPlayerState.thumbMaster = isCurrentPlayer
-    }
-    // gameId will be from the URL route
-    getGame("6669");
-  }, []);
-
+  const [newGame, setNewGame] = useState(!sessionPlayerName);
+  const [status, setStatus] = useState(["Start picking cards!"]);
+  const [playerState, setPlayerState] = useState(fakePlayers);
   const currentPlayer = playerState.find((p) => p.current);
   const { name } = currentPlayer;
   const currentPlayerIndex = playerState.map((p) => p.current).indexOf(true);
-
   const changePlayer = (card) =>
     setPlayerState(
       playerState.map((player, index) => {
@@ -145,37 +107,43 @@ export const Game = () => {
   };
 
   const statusResponseTemplate = [
-    { card: 'Ace', text: 'WATERFALL!' },
-    { card: 'King', text: 'Make a rule.' },
-    { card: 'Queen', text: `${name} is now the Question Master!` },
-    { card: 'Jack', text: `${name} is now the Thumb Master!`},
-    { card: '10', text: 'Category!' },
-    { card: '9', text: 'Rhyme!' },
-    { card: '8', color: 'red', text: `${name} drink!` },
-    { card: '8', color: 'black', text: `${name} give out drinks!` },
-    { card: '7', color: 'red', text: `${name} drink!` },
-    { card: '7', color: 'black', text: `${name} give out drinks!` },
-    { card: '6', color: 'red', text: `${name} drink!` },
-    { card: '6', color: 'black', text: `${name} give out drinks!` },
-    { card: '5', text: `${name} drink 5!` },
-    { card: '4', text: `${name} drink 4!` },
-    { card: '3', text: `${name} drink 3!` },
-    { card: '2', text: `${name} drink 2!` },
-  ]
+    { card: "Ace", text: "WATERFALL!" },
+    { card: "King", text: "Make a rule." },
+    { card: "Queen", text: `${name} is now the Question Master!` },
+    { card: "Jack", text: `${name} is now the Thumb Master!` },
+    { card: "10", text: "Category!" },
+    { card: "9", text: "Rhyme!" },
+    { card: "8", color: "red", text: `${name} drink!` },
+    { card: "8", color: "black", text: `${name} give out drinks!` },
+    { card: "7", color: "red", text: `${name} drink!` },
+    { card: "7", color: "black", text: `${name} give out drinks!` },
+    { card: "6", color: "red", text: `${name} drink!` },
+    { card: "6", color: "black", text: `${name} give out drinks!` },
+    { card: "5", text: `${name} drink 5!` },
+    { card: "4", text: `${name} drink 4!` },
+    { card: "3", text: `${name} drink 3!` },
+    { card: "2", text: `${name} drink 2!` },
+  ];
 
   const startGame = (gameRoute) => {
-    let privateGameRoute = gameRoute
+    let privateGameRoute = gameRoute;
     if (!gameRoute) {
-    // If there's no game route, we need to do firestore stuff to create one
-    privateGameRoute = '/testGame'
+      // If there's no game route, we need to do firestore stuff to create one
+      privateGameRoute = "/testGame";
     }
-   // Add sessionPlayerName to firestore here
-    window.history.pushState('','',privateGameRoute)
-    setNewGame(false)
-  }
-  
+    // Add sessionPlayerName to firestore here
+    window.history.pushState("", "", privateGameRoute);
+    setNewGame(false);
+  };
+
   if (newGame) {
-    return  <NewGame startGame={startGame} gameRoute={gameRoute} setSessionPlayerName={setSessionPlayerName} />
+    return (
+      <NewGame
+        startGame={startGame}
+        gameRoute={gameRoute}
+        setSessionPlayerName={setSessionPlayerName}
+      />
+    );
   } else {
     return (
       <Table>
