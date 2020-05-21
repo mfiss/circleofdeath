@@ -54,7 +54,6 @@ const CircleCard = styled(Card)`
   }
 `}`
 
-
 export default ({ gameId, updateStatus }) => {
 
   const suits = ["Hearts", "Spades", "Clubs", "Diamonds"]
@@ -68,7 +67,8 @@ export default ({ gameId, updateStatus }) => {
         color: (suit === "Hearts" || suit === "Diamonds") ? 'red' : 'black',
         inPlay: true,
         suit,
-        image: null
+        image: null,
+        rotate: parseInt(Math.random() * 360)
       })
     })
   })
@@ -90,26 +90,28 @@ export default ({ gameId, updateStatus }) => {
     }
     return array;
   }
-  // Here's where firestore will need to update the deck state every time a card is played
-  const [deckState, setDeckState] = useState(shuffle(deckArray))
-  const [discardPile, setDiscardPile] = useState([])
 
-  const handleClick = (card) => {
-    //do websocket stuff
-    firestore.collection(`/games/${gameId}/game`).add({
+  const [deckState, setDeckState] = useState(shuffle(deckArray))
+  const [currentCard, setCurrentCard] = useState({})
+
+  const handleClick = async (card) => {
+    
+    await firestore.collection(`/games/${gameId}/game`).add({
       deckState: deckState.map(eachCard => eachCard === card ? { ...eachCard, inPlay: false } : eachCard),
-      card,
-      discardPile: [...discardPile, { ...card, rotate: Math.random() * 360 }]
+      card
     })
       .then(doc => {
-        console.log('UPDATE TIME STAMP', doc.id)
+        doc.get().then(doc => console.log('UPDATE TIME STAMP', doc.data()))
         doc.update({
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         })
+        setCurrentCard(card)
       })
       .catch(err => console.log(err))
   }
+
   useEffect(() => {
+    
     // setup for later
     let unsub
     function syncGame() {
@@ -117,17 +119,12 @@ export default ({ gameId, updateStatus }) => {
         // returned function is for unsubbing
         unsub = firestore.collection(`/games/${gameId}/game`).orderBy('timestamp').limit(1).onSnapshot(snapshot => {
           const currentState = snapshot.docs.map(doc => doc.data())
-          console.log('CURRENT STATE', currentState[0])
+          console.log('CURRENT STATE', currentState)
           if (currentState[0]) {
-            const { card, deckState, discardPile } = currentState[0]
+            const { card, deckState } = currentState[0]
             setDeckState([...deckState])
             updateStatus(card)
-            console.log('DECKSTATE', deckState)
-            console.log('UPDATESTATUS', card)
-            if (discardPile) {
-              console.log('DISCARD', discardPile)
-              setDiscardPile([...discardPile])
-            }
+            console.log('useEffect firing', deckState, card)
           }
         })
       } catch (err) {
@@ -137,15 +134,18 @@ export default ({ gameId, updateStatus }) => {
     syncGame()
     // need this to unsub when component unmounts
     return () => unsub()
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCard])
 
+  const discardPile = deckState.filter(card => !card.inPlay)
+  console.log('discard', discardPile)
   return (
     <DeckContainer>
       {discardPile.map((card, i) => <Card key={JSON.stringify(card)} src={get(Cards, `${card.suit}${card.card}`)} index={i} rotate={card.rotate} />)}
       {deckState.map((card, i) =>
         <CircleCard
           key={JSON.stringify(card)}
-          // src={Cards.CardBack} 
+          src={Cards.CardBack} 
           index={i}
           inPlay={card.inPlay}
           onClick={() => handleClick(card)} />)}
