@@ -50,12 +50,7 @@ const GameInfoContainer = styled.div`
   font-family: "Caveat", cursive;
 `;
 
-const fakePlayers = [
-  { name: "Matt", current: true, thumbMaster: false, questionMaster: false },
-  { name: "Bill", current: false, thumbMaster: false, questionMaster: false },
-  { name: "Chris", current: false, thumbMaster: false, questionMaster: false },
-  { name: "Dan", current: false, thumbMaster: false, questionMaster: false },
-];
+const fakePlayers = [{ name: "", current: true, thumbMaster: false, questionMaster: false },];
 
 export const Game = () => {
   const path = window.location.pathname;
@@ -148,7 +143,7 @@ export const Game = () => {
     return (
       <Table>
         <Column>
-          <Deck updateStatus={updateStatus} />
+          <Deck gameId={gameRoute} updateStatus={updateStatus} />
           <GameStatusSection>
             <Players gameId={gameRoute} players={playerState} />
             <Status status={status} />

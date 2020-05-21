@@ -98,12 +98,10 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
       const snapshot = firestore.collection('games').doc(`${gameRoute}`).collection('players')
       // add your player
       snapshot.add({
-        players: {
-          name,
-          current: false,
-          thumbMaster: false,
-          questionMaster: false,
-        }
+        name,
+        current: false,
+        thumbMaster: false,
+        questionMaster: false,
       }).then(doc => {
         // add user to localstorage for later use
         localStorage.setItem('playerId', doc.id)
@@ -125,7 +123,7 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
               questionMaster: false
             }).then(player => {
               localStorage.setItem('playerId', player.id)
-            })
+            }).catch(err => console.log(err))
           // start game with the doc.id
           startGame(doc.id);
         });
@@ -142,7 +140,7 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
           if (active) {
             startGame(gameRoute)
           }
-        })
+        }).catch(err => console.log(err))
       }
     }
     moveAlongNow(gameRoute)
