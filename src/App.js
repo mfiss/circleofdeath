@@ -150,7 +150,7 @@ export const Game = () => {
         <Column>
           <Deck updateStatus={updateStatus} />
           <GameStatusSection>
-            <Players players={playerState} />
+            <Players gameId={gameRoute} players={playerState} />
             <Status status={status} />
           </GameStatusSection>
         </Column>

@@ -68,21 +68,30 @@ export default ({ gameId, players }) => {
   // TODO: fetch players
   const [activePlayers, setActivePlayers] = useState(players);
   useEffect(() => {
-    async function getPlayers() {
+    // set this for unsubscribing on component unmount
+    let unsub
+    function getPlayers() {
       try {
-        const playerList = await firestore.collection("games").doc(`${gameId}`).collection('players').get();
-        playerList.forEach(doc => console.log(doc.id))
+        // mount the listener
+        unsub = firestore.collection(`/games/${gameId}/players`).onSnapshot(snapshot => {
+          let currentPlayers = []
+          snapshot.forEach(doc => {
+            currentPlayers.push(doc.data())
+          })
+          setActivePlayers(currentPlayers)
+        })
       } catch (err) {
         console.log(err)
       }
     }
     getPlayers();
+    // unmount unsub
+    return () => unsub()
   }, []);
-
   return (
     <PlayersList>
-      {players.map((player, i) => (
-        <PlayerListItem key={JSON.stringify(player)} current={player.current}>
+      {activePlayers.map((player, i) => (
+        <PlayerListItem key={i} current={player.current}>
           <PlayerBox>
             <PlayerStatusBox>
               <Thumb currentMaster={player.thumbMaster} />
