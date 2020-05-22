@@ -91,13 +91,50 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
   };
 
 
+  const suits = ["Hearts", "Spades", "Clubs", "Diamonds"]
+  const cards = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"]
+
+  const deckArray = []
+  suits.forEach(suit => {
+    cards.forEach(card => {
+      deckArray.push({
+        card,
+        color: (suit === "Hearts" || suit === "Diamonds") ? 'red' : 'black',
+        inPlay: true,
+        suit,
+        image: null,
+        rotate: parseInt(Math.random() * 360),
+        index: 0
+      })
+    })
+  })
+
+  const shuffle = array => {
+    var currentIndex = array.length, temporaryValue, randomIndex;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+
+      // And swap it with the current element.
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
+    }
+    return array;
+  }
+
+  const shuffledDeck = shuffle(deckArray)
 
   const checkForName = (gameRoute) => {
     if (name && gameRoute) {
       // get collection of players
-      const snapshot = firestore.collection('games').doc(`${gameRoute}`).collection('players')
+      firestore.collection('games').doc(`${gameRoute}`).collection('players')
       // add your player
-      snapshot.add({
+      .add({
         name,
         current: false,
         thumbMaster: false,
@@ -111,26 +148,32 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
     }
     if (name && !gameRoute) {
       // setups up active game
-      const game = firestore.collection(`games`).add({ active: true })
-      game
-        .then((doc) => {
-          // add the player to a players collection
-          firestore.collection('games').doc(`${doc.id}`).collection('players')
-            .add({
-              name,
-              current: true,
-              thumbMaster: false,
-              questionMaster: false
-            }).then(player => {
-              localStorage.setItem('playerId', player.id)
-            }).catch(err => console.log(err))
-          // start game with the doc.id
-          startGame(doc.id);
-        });
+      firestore.collection(`games`).add({ active: true })
+      .then((doc) => {
+        const playerDocRef = firestore.collection('games').doc(`${doc.id}`).collection('players')
+        const deckDocRef = firestore.collection('games').doc(`${doc.id}`).collection('deck')
+        // add the player to a players collection
+        playerDocRef
+          .add({
+            name,
+            current: true,
+            thumbMaster: false,
+            questionMaster: false
+          }).then(player => {
+            localStorage.setItem('playerId', player.id)
+          }).catch(err => console.log(err))
+
+          shuffledDeck.forEach(card => deckDocRef.add(card))
+          
+        // start game with the doc.id
+        startGame(doc.id);
+      });
+         
     } else {
       setError("Enter a name first");
     }
   };
+  
   useEffect(() => {
     function moveAlongNow(gameRoute) {
       const playerId = localStorage.getItem('playerId')

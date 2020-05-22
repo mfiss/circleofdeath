@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Cards from './cards';
 import get from 'lodash.get';
-import firebase, { firestore } from './firebase'
+import { firestore } from './firebase'
 
 const DeckContainer = styled.div`
   margin: auto;
@@ -92,21 +92,15 @@ export default ({ gameId, updateStatus }) => {
   }
 
   const [deckState, setDeckState] = useState(shuffle(deckArray))
-  const [currentCard, setCurrentCard] = useState({})
+  const discardPile = deckState && deckState.filter(card => !card.inPlay)
 
   const handleClick = async (card) => {
     
-    await firestore.collection(`/games/${gameId}/game`).add({
-      deckState: deckState.map(eachCard => eachCard === card ? { ...eachCard, inPlay: false } : eachCard),
-      card
-    })
-      .then(doc => {
-        doc.get().then(doc => console.log('UPDATE TIME STAMP', doc.data()))
-        doc.update({
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        setCurrentCard(card)
-      })
+    await firestore.collection(`/games/${gameId}/deck`)
+    .where('card', '==', card.card)
+    .where('suit', '==', card.suit)
+    .get()
+      .then(snapshot => snapshot.forEach(doc => firestore.collection(`/games/${gameId}/deck`).doc(doc.id).update({inPlay: false, index: discardPile.length })))
       .catch(err => console.log(err))
   }
 
@@ -117,14 +111,13 @@ export default ({ gameId, updateStatus }) => {
     function syncGame() {
       try {
         // returned function is for unsubbing
-        unsub = firestore.collection(`/games/${gameId}/game`).orderBy('timestamp').limit(1).onSnapshot(snapshot => {
-          const currentState = snapshot.docs.map(doc => doc.data())
-          console.log('CURRENT STATE', currentState)
-          if (currentState[0]) {
-            const { card, deckState } = currentState[0]
-            setDeckState([...deckState])
-            updateStatus(card)
-            console.log('useEffect firing', deckState, card)
+        unsub = firestore.collection(`/games/${gameId}/deck`).onSnapshot(snapshot => {
+          const deckState = snapshot.docs.map(doc => doc.data())
+          console.log('CURRENT STATE', deckState)
+          if (deckState) {
+            setDeckState(deckState)
+            // updateStatus(card)
+            console.log('useEffect firing', deckState)
           }
         })
       } catch (err) {
@@ -135,9 +128,8 @@ export default ({ gameId, updateStatus }) => {
     // need this to unsub when component unmounts
     return () => unsub()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCard])
+  }, [])
 
-  const discardPile = deckState.filter(card => !card.inPlay)
   console.log('discard', discardPile)
   return (
     <DeckContainer>
