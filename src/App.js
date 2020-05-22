@@ -58,7 +58,7 @@ export const Game = () => {
   const [sessionPlayerName, setSessionPlayerName] = useState(null);
   // Either version of newGame will prompt user for a name if one doesn't exist yet
   const [newGame, setNewGame] = useState(!sessionPlayerName);
-  const [status, setStatus] = useState(["Start picking cards!"]);
+  const [status, setStatus] = useState("Start picking cards!");
   const [playerState, setPlayerState] = useState(fakePlayers);
   const currentPlayer = playerState.find((p) => p.current);
   const { name } = currentPlayer;
@@ -88,17 +88,25 @@ export const Game = () => {
       })
     );
 
-  const updateStatus = (card) => {
-    changePlayer(card);
+  const updateStatus = (status) => {
+    console.log('status', status)
+    changePlayer(status);
 
-    const statusResponse = statusResponseTemplate.find((status) => {
-      if (status.color && card.color !== status.color) {
+    const statusResponse = statusResponseTemplate.find((match) => {
+      if (match.color && status.color !== match.color) {
         return false;
       }
-      return card.card === status.card;
+      return status.card === match.card;
     }) || { text: "Status not found!" };
 
-    setStatus([`${card.card} of ${card.suit}: ${statusResponse.text}`]);
+    if (!status.card && !status.thumbMaster) {
+      setStatus('Start picking cards!')
+    } else if (status.thumbMaster) { 
+      setStatus(`${status.thumbMaster} put their thumb down last. Drink!`)
+    } else {
+      setStatus(`${status.card} of ${status.suit}: ${statusResponse.text}`);
+    }
+    
   };
 
   const statusResponseTemplate = [

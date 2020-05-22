@@ -95,29 +95,33 @@ export default ({ gameId, updateStatus }) => {
   const discardPile = deckState && deckState.filter(card => !card.inPlay)
 
   const handleClick = async (card) => {
-    
-    await firestore.collection(`/games/${gameId}/deck`)
-    .where('card', '==', card.card)
-    .where('suit', '==', card.suit)
-    .get()
+     const updateDeck = firestore.collection(`/games/${gameId}/deck`)
+      .where('card', '==', card.card)
+      .where('suit', '==', card.suit)
+      .get()
       .then(snapshot => snapshot.forEach(doc => firestore.collection(`/games/${gameId}/deck`).doc(doc.id).update({inPlay: false, index: discardPile.length })))
       .catch(err => console.log(err))
+
+    const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc().set({...card})
+      await Promise.all([updateDeck, updateCurrentStatus])
   }
 
   useEffect(() => {
-    
-    // setup for later
     let unsub
     function syncGame() {
       try {
         // returned function is for unsubbing
         unsub = firestore.collection(`/games/${gameId}/deck`).onSnapshot(snapshot => {
           const deckState = snapshot.docs.map(doc => doc.data())
-          console.log('CURRENT STATE', deckState)
           if (deckState) {
             setDeckState(deckState)
-            // updateStatus(card)
-            console.log('useEffect firing', deckState)
+          }
+        })
+        firestore.collection(`/games/${gameId}/currentStatus`).onSnapshot(snapshot => {
+          const currentStatus = snapshot.docs.map(doc => doc.data())[0]
+          if (currentStatus) {
+            updateStatus(currentStatus)
+            console.log('CURRENT STATUS', currentStatus, 'snapshot docs', snapshot.docs.map(doc => doc.data()))
           }
         })
       } catch (err) {
@@ -130,10 +134,9 @@ export default ({ gameId, updateStatus }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  console.log('discard', discardPile)
   return (
     <DeckContainer>
-      {discardPile.map((card, i) => <Card key={JSON.stringify(card)} src={get(Cards, `${card.suit}${card.card}`)} index={i} rotate={card.rotate} />)}
+      {discardPile.map((card, i) => <Card key={JSON.stringify(card)} src={get(Cards, `${card.suit}${card.card}`)} index={card.index} rotate={card.rotate} />)}
       {deckState.map((card, i) =>
         <CircleCard
           key={JSON.stringify(card)}

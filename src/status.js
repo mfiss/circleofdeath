@@ -7,8 +7,8 @@ const StyledStatus = styled.div`
   text-align: center;
 `
 
-export default ({status}) => status.map(statusItem => (
-    <StyledStatus key={JSON.stringify(statusItem)}>
-      {statusItem}
+export default ({status}) => (
+    <StyledStatus>
+      {status}
     </StyledStatus>
-  ))
+  )
