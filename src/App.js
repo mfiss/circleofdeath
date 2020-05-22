@@ -7,6 +7,7 @@ import Rules from "./rules";
 import Deck from "./deck";
 import NewGame from "./newGame";
 import globalStyles from "./globalStyles";
+import { firestore } from './firebase'
 
 export const Table = styled.div`
   margin: auto;
@@ -50,8 +51,6 @@ const GameInfoContainer = styled.div`
   font-family: "Caveat", cursive;
 `;
 
-const fakePlayers = [{ name: "", current: true, thumbMaster: false, questionMaster: false },];
-
 export const Game = () => {
   const path = window.location.pathname;
   const gameRoute = path !== "/" && path.slice(1);
@@ -59,9 +58,9 @@ export const Game = () => {
   // Either version of newGame will prompt user for a name if one doesn't exist yet
   const [newGame, setNewGame] = useState(!sessionPlayerName);
   const [status, setStatus] = useState("Start picking cards!");
-  const [playerState, setPlayerState] = useState(fakePlayers);
+  const [playerState, setPlayerState] = useState([]);
   const currentPlayer = playerState.find((p) => p.current);
-  const { name } = currentPlayer;
+  const { name } = currentPlayer || {};
   const currentPlayerIndex = playerState.map((p) => p.current).indexOf(true);
   const changePlayer = (card) =>
     setPlayerState(
@@ -87,6 +86,13 @@ export const Game = () => {
         return newPlayerState;
       })
     );
+
+    const playerId = localStorage.getItem('playerId')
+    // Make people that leave the game inactive
+    window.onunload = () => firestore.collection(`/games/${gameRoute}/players`)
+      .doc(playerId)
+      .update({active: false, thumbMaster: false, questionMaster: false})
+      .catch(err => console.log(err))
 
   const updateStatus = (status) => {
     console.log('status', status)
@@ -128,14 +134,9 @@ export const Game = () => {
     { card: "2", text: `${name} drink 2!` },
   ];
 
-  const startGame = (gameRoute) => {
-    let privateGameRoute = gameRoute;
-    if (!gameRoute) {
-      // If there's no game route, we need to do firestore stuff to create one
-      privateGameRoute = "/testGame";
-    }
-    // Add sessionPlayerName to firestore here
-    window.history.pushState("", "", privateGameRoute);
+  const startGame = (gameRoute, returningPlayer) => {
+    console.log('returning player', returningPlayer)
+    window.history.pushState("", "", gameRoute);
     setNewGame(false);
   };
 
@@ -153,7 +154,7 @@ export const Game = () => {
         <Column>
           <Deck gameId={gameRoute} updateStatus={updateStatus} />
           <GameStatusSection>
-            <Players gameId={gameRoute} players={playerState} />
+            <Players gameId={gameRoute} players={playerState} sessionPlayerName={sessionPlayerName} />
             <Status status={status} />
           </GameStatusSection>
         </Column>

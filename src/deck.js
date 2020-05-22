@@ -101,9 +101,18 @@ export default ({ gameId, updateStatus }) => {
       .get()
       .then(snapshot => snapshot.forEach(doc => firestore.collection(`/games/${gameId}/deck`).doc(doc.id).update({inPlay: false, index: discardPile.length })))
       .catch(err => console.log(err))
+    let player = {}
+    const updatePlayers = firestore.collection(`/games/${gameId}/players`)
+    .get()
+    .then(snapshot => {
+      const playerDocs = snapshot.docs.map(doc => doc.data())
+      console.log('players docs', playerDocs)
+    })
+    .catch(err => console.log(err))
 
-    const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc('currentStatus').set({...card})
-      await Promise.all([updateDeck, updateCurrentStatus])
+    const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc('currentStatus').set({...card, player})
+
+      await Promise.all([updateDeck, updatePlayers, updateCurrentStatus ])
   }
 
   useEffect(() => {
@@ -111,12 +120,16 @@ export default ({ gameId, updateStatus }) => {
     function syncGame() {
       try {
         // returned function is for unsubbing
+
+        // update deck state
         unsub = firestore.collection(`/games/${gameId}/deck`).onSnapshot(snapshot => {
           const deckState = snapshot.docs.map(doc => doc.data())
           if (deckState) {
             setDeckState(deckState)
           }
         })
+
+        // update current card state
         firestore.collection(`/games/${gameId}/currentStatus`).onSnapshot(snapshot => {
           const currentStatus = snapshot.docs.map(doc => doc.data())[0]
           if (currentStatus) {

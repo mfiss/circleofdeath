@@ -131,33 +131,39 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
   const checkForName = (gameRoute) => {
     if (name && gameRoute) {
       // get collection of players
-      firestore.collection('games').doc(`${gameRoute}`).collection('players')
-      // add your player
-      .add({
-        name,
-        current: false,
-        thumbMaster: false,
-        questionMaster: false,
-      }).then(doc => {
-        // add user to localstorage for later use
-        localStorage.setItem('playerId', doc.id)
+      const players = firestore.collection('games').doc(`${gameRoute}`).collection('players')
+      const numberOfPlayers = players.get().then(snap => {
+        console.log(name, gameRoute, 'players', players, 'number', numberOfPlayers)
+        // add your player
+        players.add({
+          active: true,
+          name,
+          current: false,
+          index: snap.size,
+          thumbMaster: false,
+          questionMaster: false,
+        }).then(doc => {
+          // add user to localstorage for later use
+          localStorage.setItem('playerId', doc.id)
+        }).catch(err => console.log(err))
       }).catch(err => console.log(err))
       // start game with URL gameRoute
       startGame(gameRoute);
     }
     if (name && !gameRoute) {
-      // setups up active game
+      // set up active game
       firestore.collection(`games`).add({ active: true })
       .then((doc) => {
         const playerDocRef = firestore.collection('games').doc(`${doc.id}`).collection('players')
         const deckDocRef = firestore.collection('games').doc(`${doc.id}`).collection('deck')
-        const currentStatusRef = firestore.collection('games').doc(`${doc.id}`).collection('currentStatus')
-       
+        
         // add the player to a players collection
         playerDocRef
           .add({
+            active: true,
             name,
             current: true,
+            index: 0,
             thumbMaster: false,
             questionMaster: false
           }).then(player => {
@@ -165,7 +171,6 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
           }).catch(err => console.log(err))
 
           shuffledDeck.forEach(card => deckDocRef.add(card))
-          // currentStatusRef.doc('currentStatus').set({})
         // start game with the doc.id
         startGame(doc.id);
       });
@@ -182,13 +187,22 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
         firestore.collection('games').doc(`${gameRoute}`).get().then(doc => {
           const active = doc.data()?.active
           if (active) {
-            startGame(gameRoute)
+            const players = firestore.collection('games').doc(`${gameRoute}`).collection('players')
+            const playerIsReturning = players.doc(playerId).get()
+            .then(doc => {
+              if (doc.exists) {
+                console.log('player is returning', doc)
+                players.doc(playerId).update({ active: true})
+                startGame(gameRoute, playerIsReturning)
+              }
+            }).catch(err => console.log(err))
           }
-        }).catch(err => console.log(err))
+        })
       }
     }
     moveAlongNow(gameRoute)
   }, [gameRoute, startGame])
+
   return (
     <>
       Enter Name:

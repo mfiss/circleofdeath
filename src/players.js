@@ -67,6 +67,7 @@ const Thumb = ({ currentMaster }) => {
 export default ({ gameId, players }) => {
   // TODO: fetch players
   const [activePlayers, setActivePlayers] = useState(players);
+
   useEffect(() => {
     // set this for unsubscribing on component unmount
     let unsub
@@ -78,7 +79,9 @@ export default ({ gameId, players }) => {
           snapshot.forEach(doc => {
             currentPlayers.push(doc.data())
           })
-          setActivePlayers(currentPlayers)
+          const currentActivePlayers = currentPlayers.filter(player => player.active)
+          console.log('current players', currentPlayers, 'currentActivePlayers', currentActivePlayers)
+          setActivePlayers(currentActivePlayers)
         })
       } catch (err) {
         console.log(err)
@@ -87,7 +90,9 @@ export default ({ gameId, players }) => {
     getPlayers();
     // unmount unsub
     return () => unsub()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
   return (
     <PlayersList>
       {activePlayers.map((player, i) => (
