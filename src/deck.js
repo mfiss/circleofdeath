@@ -102,7 +102,7 @@ export default ({ gameId, updateStatus }) => {
       .then(snapshot => snapshot.forEach(doc => firestore.collection(`/games/${gameId}/deck`).doc(doc.id).update({inPlay: false, index: discardPile.length })))
       .catch(err => console.log(err))
 
-    const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc().set({...card})
+    const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc('currentStatus').set({...card})
       await Promise.all([updateDeck, updateCurrentStatus])
   }
 

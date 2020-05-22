@@ -152,16 +152,6 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
         const playerDocRef = firestore.collection('games').doc(`${doc.id}`).collection('players')
         const deckDocRef = firestore.collection('games').doc(`${doc.id}`).collection('deck')
         const currentStatusRef = firestore.collection('games').doc(`${doc.id}`).collection('currentStatus')
-        // const initCurrentStatus = {
-        //   card: null,
-        //   color: null,
-        //   id: 'currentStatus',
-        //   inPlay: null,
-        //   suit: null,
-        //   rotate: null,
-        //   index: null,
-        //   thumbMaster: false
-        // } 
        
         // add the player to a players collection
         playerDocRef
@@ -175,7 +165,7 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
           }).catch(err => console.log(err))
 
           shuffledDeck.forEach(card => deckDocRef.add(card))
-          // currentStatusRef.add(initCurrentStatus)
+          // currentStatusRef.doc('currentStatus').set({})
         // start game with the doc.id
         startGame(doc.id);
       });
