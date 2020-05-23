@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import ThumbSVG from "./thumb";
-import { firestore } from "./firebase";
 
 const PlayersList = styled.ul`
   display: flex;
@@ -64,38 +63,11 @@ const Thumb = ({ currentMaster }) => {
   );
 };
 
-export default ({ gameId, players }) => {
-  // TODO: fetch players
-  const [activePlayers, setActivePlayers] = useState(players);
+export default ({ players }) => {
 
-  useEffect(() => {
-    // set this for unsubscribing on component unmount
-    let unsub
-    function getPlayers() {
-      try {
-        // mount the listener
-        unsub = firestore.collection(`/games/${gameId}/players`).onSnapshot(snapshot => {
-          let currentPlayers = []
-          snapshot.forEach(doc => {
-            currentPlayers.push(doc.data())
-          })
-          const currentActivePlayers = currentPlayers.filter(player => player.active)
-          console.log('current players', currentPlayers, 'currentActivePlayers', currentActivePlayers)
-          setActivePlayers(currentActivePlayers)
-        })
-      } catch (err) {
-        console.log(err)
-      }
-    }
-    getPlayers();
-    // unmount unsub
-    return () => unsub()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
   return (
     <PlayersList>
-      {activePlayers.map((player, i) => (
+      {players.map((player, i) => (
         <PlayerListItem key={i} current={player.current}>
           <PlayerBox>
             <PlayerStatusBox>

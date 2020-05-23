@@ -106,7 +106,6 @@ export default ({ gameId, updateStatus }) => {
     .get()
     .then(snapshot => {
       const playerDocs = snapshot.docs.map(doc => doc.data())
-      console.log('players docs', playerDocs)
     })
     .catch(err => console.log(err))
 

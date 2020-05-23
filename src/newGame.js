@@ -133,7 +133,6 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
       // get collection of players
       const players = firestore.collection('games').doc(`${gameRoute}`).collection('players')
       const numberOfPlayers = players.get().then(snap => {
-        console.log(name, gameRoute, 'players', players, 'number', numberOfPlayers)
         // add your player
         players.add({
           active: true,
@@ -191,7 +190,6 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
             const playerIsReturning = players.doc(playerId).get()
             .then(doc => {
               if (doc.exists) {
-                console.log('player is returning', doc)
                 players.doc(playerId).update({ active: true})
                 startGame(gameRoute, playerIsReturning)
               }

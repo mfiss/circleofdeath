@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled, { ThemeProvider } from "styled-components";
 import Status from "./status";
 import Players from "./players";
@@ -60,42 +60,68 @@ export const Game = () => {
   const [status, setStatus] = useState("Start picking cards!");
   const [playerState, setPlayerState] = useState([]);
   const currentPlayer = playerState.find((p) => p.current);
+  console.log('current player', currentPlayer, 'player state', playerState)
   const { name } = currentPlayer || {};
   const currentPlayerIndex = playerState.map((p) => p.current).indexOf(true);
-  const changePlayer = (card) =>
-    setPlayerState(
-      playerState.map((player, index) => {
-        const thumbMaster = card.card === "Jack";
-        const questionMaster = card.card === "Queen";
-        const isCurrentPlayer = index === currentPlayerIndex;
-        const newPlayerState = player;
+  const nextPlayerIndex = (currentPlayerIndex === playerState.length - 1) ? 0 : currentPlayerIndex + 1
+  const playerId = localStorage.getItem('playerId')
+  const playersRef = firestore.collection(`/games/${gameRoute}/players`)
+  const currentSessionPlayer = playersRef.doc(playerId)
 
-        // Player at the next index goes next, or if we're at the end of the array, it's the player at index 0
-        newPlayerState.current =
-          index === currentPlayerIndex + 1 ||
-          (currentPlayerIndex === playerState.length - 1 && !index);
+  const changePlayer = (status) => {
+    console.log('status', status)
+    const cardStr = status.card || '';
+    const thumbMaster = cardStr === "Jack";
+    const questionMaster = cardStr === "Queen";
 
+    currentSessionPlayer
+    .get()
+    .then(doc => {
         if (thumbMaster) {
-          newPlayerState.thumbMaster = isCurrentPlayer;
+          playersRef.where('thumbMaster', '==', true)
+          .get()
+          .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ thumbMaster: false })))
+        
         }
-
         if (questionMaster) {
-          newPlayerState.questionMaster = isCurrentPlayer;
+          playersRef.where('questionMaster', '==', true).get()
+          .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ questionMaster: false })))
         }
 
-        return newPlayerState;
+        playersRef.where('current', '==', true).get()
+        .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({current: false, thumbMaster, questionMaster})))
+        console.log('playerState', playerState, 'nextPlayerIndex', nextPlayerIndex)
+        // index can kinda work like an id
+        playersRef.where('index', '==', playerState[nextPlayerIndex].index).get()
+          .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ current: true })))
       })
-    );
-
-    const playerId = localStorage.getItem('playerId')
-    // Make people that leave the game inactive
-    window.onunload = () => firestore.collection(`/games/${gameRoute}/players`)
-      .doc(playerId)
-      .update({active: false, thumbMaster: false, questionMaster: false})
       .catch(err => console.log(err))
+    }
+
+    const handleUnload = (e) => {
+       e.preventDefault()
+      
+      currentSessionPlayer
+        .get()
+        .then(doc => {
+          if (doc.exists && doc.data().active) {
+            // It's the leaving player's turn, so make the next person the current player
+            changePlayer()
+          } 
+        })
+        .catch(err => console.log(err))
+      playersRef
+      .doc(playerId)
+      .update({active: false})
+      .catch(err => console.log(err))
+    }
+
+    // Make people that leave the game inactive
+    window.addEventListener('beforeunload', e => handleUnload(e))
+    
+    
 
   const updateStatus = (status) => {
-    console.log('status', status)
     changePlayer(status);
 
     const statusResponse = statusResponseTemplate.find((match) => {
@@ -135,10 +161,33 @@ export const Game = () => {
   ];
 
   const startGame = (gameRoute, returningPlayer) => {
-    console.log('returning player', returningPlayer)
     window.history.pushState("", "", gameRoute);
     setNewGame(false);
   };
+
+  useEffect(() => {
+    // set this for unsubscribing on component unmount
+    let unsub
+    function getPlayers() {
+      try {
+        // mount the listener
+        unsub = firestore.collection(`/games/${gameRoute}/players`).onSnapshot(snapshot => {
+          let currentPlayers = []
+          snapshot.forEach(doc => {
+            currentPlayers.push(doc.data())
+          })
+          const currentActivePlayers = currentPlayers.filter(player => player.active)
+          setPlayerState(currentActivePlayers)
+        })
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    getPlayers();
+    // unmount unsub
+    return () => unsub()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameRoute]);
 
   if (newGame) {
     return (
@@ -154,7 +203,7 @@ export const Game = () => {
         <Column>
           <Deck gameId={gameRoute} updateStatus={updateStatus} />
           <GameStatusSection>
-            <Players gameId={gameRoute} players={playerState} sessionPlayerName={sessionPlayerName} />
+            <Players players={playerState} />
             <Status status={status} />
           </GameStatusSection>
         </Column>
