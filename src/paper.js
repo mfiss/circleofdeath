@@ -1,31 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styled from 'styled-components'
 
 const StyledPaper = styled.div`
-  position: relative;
   margin: 1rem;
   background: white;
   border-radius: 1rem;
 
-  &:before {
-    content: '';
-    border-left: .2rem solid #EEB9B9;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 15%;  
-    z-index: 1;
-  }
 
-  &:after {
-    content: '';
-    border-right: .1rem solid #EEB9B9;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    right: 15%;  
-    z-index: 1;
-  }
 
   ${({theme}) => `@media only screen and (min-width : ${theme.largeBreakpoint}px) {
 
@@ -37,7 +18,29 @@ const StyledPaper = styled.div`
     mask-size: 100% 100%;
     -webkit-mask-composite: destination-in;
     mask-composite: subtract;
+
+    &:before {
+      content: '';
+      border-left: .2rem solid #EEB9B9;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 15%;  
+      z-index: 1;
+    }
+  
+    &:after {
+      content: '';
+      border-right: .1rem solid #EEB9B9;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      right: 15%;  
+      z-index: 1;
+    }
   }
+
+
 `}`
 
 const PaperLines = styled.div`
@@ -50,9 +53,11 @@ const PaperLines = styled.div`
   border-bottom-left-radius: 1rem;
   background: repeating-linear-gradient(white, white 2rem, #B9CEEE 2rem, #B9CEEE 2.1rem);
 `
-export default ({children}) => (
+export default ({children}) => {
+  return (
   <StyledPaper>
     {children}
     <PaperLines />
   </StyledPaper>
 )
+  }

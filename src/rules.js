@@ -15,7 +15,7 @@ bottom: 0;
     margin: 0;
   }
 
-  ${({theme}) => `@media only screen and (min-width :  ${theme.largeBreakpoint}px) {
+  ${({theme}) => `@media only screen and (min-width : ${theme.largeBreakpoint}px) {
   padding-left: 17%;
   margin: auto;
 }
@@ -60,11 +60,8 @@ const Em = styled.em`
   font-weight: bold;
 `
 
-export default () => {
-const [ expanded, toggleExpanded] = useState(false)
-
-return (
-    <RulesTab onClick={() => toggleExpanded(!expanded)} top={expanded ? '0' : '90vh'}>
+export default () => (
+    <RulesTab>
       <h2>Rules:</h2>
       <ul>
         <li>
@@ -109,4 +106,4 @@ return (
         </li>
       </ul>
     </RulesTab>
-)}
+)
