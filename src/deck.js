@@ -101,17 +101,23 @@ export default ({ gameId, updateStatus }) => {
       .get()
       .then(snapshot => snapshot.forEach(doc => firestore.collection(`/games/${gameId}/deck`).doc(doc.id).update({inPlay: false, index: discardPile.length })))
       .catch(err => console.log(err))
-    let player = {}
-    const updatePlayers = firestore.collection(`/games/${gameId}/players`)
-    .get()
-    .then(snapshot => {
-      const playerDocs = snapshot.docs.map(doc => doc.data())
-    })
-    .catch(err => console.log(err))
+      // TODO: Do we need these here?
+    // let player = {}
+    // const updatePlayers = firestore.collection(`/games/${gameId}/players`)
+    // .get()
+    // .then(snapshot => {
+    //   const playerDocs = snapshot.docs.map(doc => doc.data())
+    // })
+    // .catch(err => console.log(err))
+    updateStatus(card)
 
-    const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc('currentStatus').set({...card, player})
+    // const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc('currentStatus').set({...card})
 
-      await Promise.all([updateDeck, updatePlayers, updateCurrentStatus ])
+      await Promise.all([
+        updateDeck,
+        // updatePlayers,
+        // updateCurrentStatus
+      ])
   }
 
   useEffect(() => {
@@ -129,13 +135,12 @@ export default ({ gameId, updateStatus }) => {
         })
 
         // update current card state
-        firestore.collection(`/games/${gameId}/currentStatus`).onSnapshot(snapshot => {
-          const currentStatus = snapshot.docs.map(doc => doc.data())[0]
-          if (currentStatus) {
-            updateStatus(currentStatus)
-            console.log('CURRENT STATUS', currentStatus, 'snapshot docs', snapshot.docs.map(doc => doc.data()))
-          }
-        })
+        // firestore.collection(`/games/${gameId}/currentStatus`).onSnapshot(snapshot => {
+        //   const currentStatus = snapshot.docs.map(doc => doc.data())[0]
+        //   if (currentStatus) {
+        //     console.log('CURRENT STATUS', currentStatus, 'snapshot docs', snapshot.docs.map(doc => doc.data()))
+        //   }
+        // })
       } catch (err) {
         console.log(err)
       }

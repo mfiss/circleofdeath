@@ -64,7 +64,7 @@ const Error = styled.div`
 
 const Skull = () => <img src={SkullGif} alt="Spinning Skull" />;
 
-const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
+const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName, turnOrder }) => {
   const [name, setName] = useState("");
   const [error, setError] = useState([]);
 
@@ -86,8 +86,13 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
       .replace(/[^a-z0-9áéíóúñü .,_-]/gim, "")
       .trim()
       .slice(0, 15);
-    setName(sanitizedName);
-    setSessionPlayerName(sanitizedName);
+
+      if (turnOrder.includes(sanitizedName)) {
+        setError('Name is already in use')
+      } else {
+        setName(sanitizedName);
+        setSessionPlayerName(sanitizedName);
+      }
   };
 
 
@@ -132,20 +137,16 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
     if (name && gameRoute) {
       // get collection of players
       const players = firestore.collection('games').doc(`${gameRoute}`).collection('players')
-      const numberOfPlayers = players.get().then(snap => {
-        // add your player
-        players.add({
+      players.add({
           active: true,
           name,
           current: false,
-          index: snap.size,
           thumbMaster: false,
           questionMaster: false,
         }).then(doc => {
           // add user to localstorage for later use
           localStorage.setItem('playerId', doc.id)
         }).catch(err => console.log(err))
-      }).catch(err => console.log(err))
       // start game with URL gameRoute
       startGame(gameRoute);
     }
@@ -162,7 +163,6 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
             active: true,
             name,
             current: true,
-            index: 0,
             thumbMaster: false,
             questionMaster: false
           }).then(player => {
@@ -190,6 +190,9 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
             const playerIsReturning = players.doc(playerId).get()
             .then(doc => {
               if (doc.exists) {
+                if (turnOrder.includes(doc.data()?.name)) {
+                  setError('Name is already in use')
+                }
                 players.doc(playerId).update({ active: true})
                 startGame(gameRoute, playerIsReturning)
               }
@@ -199,7 +202,7 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
       }
     }
     moveAlongNow(gameRoute)
-  }, [gameRoute, startGame])
+  }, [gameRoute, startGame, turnOrder])
 
   return (
     <>
@@ -223,7 +226,7 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName }) => {
   );
 };
 
-export default ({ startGame, gameRoute, setSessionPlayerName }) => {
+export default ({ startGame, gameRoute, setSessionPlayerName, turnOrder }) => {
   return (
     <NewGameBackground id="new-game-background">
       <TitleBackground>
@@ -233,6 +236,7 @@ export default ({ startGame, gameRoute, setSessionPlayerName }) => {
           startGame={startGame}
           gameRoute={gameRoute}
           setSessionPlayerName={setSessionPlayerName}
+          turnOrder={turnOrder}
         />
       </TitleBackground>
     </NewGameBackground>

@@ -21,10 +21,12 @@ const Column = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+  max-height: 90vh;
 
   @media only screen and (min-width: ${({ theme }) =>
     theme.largeBreakpoint}px) {
-    width: 50%;
+      max-height: 100%;
+      width: 50%;
   }
 `;
 
@@ -47,79 +49,92 @@ const GameStatusSection = styled.div`
 
 const GameInfoContainer = styled.div`
   flex: 1 1 50%;
-  position: relative;
   font-family: "Caveat", cursive;
+  z-index: 420;
+  transition: 1s ease-in-out;
+  position:absolute;
+  right: 0;
+  left:0;   
+  
+  ${({expanded}) => expanded
+  ? `
+  top: 0;
+  ` : `
+  top: 90vh;
+  `
+}
+
+  ${({theme}) => `@media only screen and (min-width : ${theme.largeBreakpoint}px) {
+    position: relative;
+  }`}
 `;
 
 export const Game = () => {
   const path = window.location.pathname;
   const gameRoute = path !== "/" && path.slice(1);
   const [sessionPlayerName, setSessionPlayerName] = useState(null);
-  // Either version of newGame will prompt user for a name if one doesn't exist yet
   const [newGame, setNewGame] = useState(!sessionPlayerName);
   const [status, setStatus] = useState("Start picking cards!");
+  const [rulesExpanded, setExpanded] = useState(false)
   const [playerState, setPlayerState] = useState([]);
   const currentPlayer = playerState.find((p) => p.current);
-  console.log('current player', currentPlayer, 'player state', playerState)
   const { name } = currentPlayer || {};
-  const currentPlayerIndex = playerState.map((p) => p.current).indexOf(true);
-  const nextPlayerIndex = (currentPlayerIndex === playerState.length - 1) ? 0 : currentPlayerIndex + 1
   const playerId = localStorage.getItem('playerId')
   const playersRef = firestore.collection(`/games/${gameRoute}/players`)
-  const currentSessionPlayer = playersRef.doc(playerId)
+  const currentSessionPlayer = playerId && playersRef.doc(playerId)
+  const turnOrder = playerState.filter(player => player.active)
+  const currentPlayerIndex = turnOrder.indexOf(currentPlayer)
+  const nextPlayerIndex = (currentPlayerIndex === turnOrder.length - 1) ? 0 : currentPlayerIndex + 1
+  const nextPlayerName = turnOrder[nextPlayerIndex]?.name
 
   const changePlayer = (status) => {
-    console.log('status', status)
     const cardStr = status.card || '';
     const thumbMaster = cardStr === "Jack";
     const questionMaster = cardStr === "Queen";
+    
+    if (thumbMaster) {
+      playersRef.where('thumbMaster', '==', true).get()
+        .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ thumbMaster: false })))
+        .catch(err => console.log(err))
+    }
 
+    if (questionMaster) {
+      playersRef.where('questionMaster', '==', true).get()
+        .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ questionMaster: false })))
+        .catch(err => console.log(err))
+    }
+
+    playersRef.get()
+    .then(snap => snap.forEach(doc => {
+      return playersRef.doc(doc.id).update({ current: false, thumbMaster: thumbMaster, questionMaster: questionMaster})}))
+    .catch(err => console.log(err))
+    
+    playersRef.where('name', '==', nextPlayerName).get()
+      .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ current: true })))
+      .catch(err => console.log(err))
+  }
+  // playersRef.get().then(snap => snap.docs.forEach(doc => console.log('playersRef doc', doc.data())))
+
+  const handleUnload = (e) => {
+      e.preventDefault()
+    
     currentSessionPlayer
-    .get()
-    .then(doc => {
-        if (thumbMaster) {
-          playersRef.where('thumbMaster', '==', true)
-          .get()
-          .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ thumbMaster: false })))
-        
-        }
-        if (questionMaster) {
-          playersRef.where('questionMaster', '==', true).get()
-          .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ questionMaster: false })))
-        }
-
-        playersRef.where('current', '==', true).get()
-        .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({current: false, thumbMaster, questionMaster})))
-        console.log('playerState', playerState, 'nextPlayerIndex', nextPlayerIndex)
-        // index can kinda work like an id
-        playersRef.where('index', '==', playerState[nextPlayerIndex].index).get()
-          .then(snap => snap.forEach(doc => playersRef.doc(doc.id).update({ current: true })))
+      .get()
+      .then(doc => {
+        if (doc.exists && doc.data().current) {
+          // It's the leaving player's turn, so make the next person the current player
+          changePlayer()
+        } 
       })
       .catch(err => console.log(err))
-    }
+    playersRef
+    .doc(playerId)
+    .update({active: false})
+    .catch(err => console.log(err))
+  }
 
-    const handleUnload = (e) => {
-       e.preventDefault()
-      
-      currentSessionPlayer
-        .get()
-        .then(doc => {
-          if (doc.exists && doc.data().active) {
-            // It's the leaving player's turn, so make the next person the current player
-            changePlayer()
-          } 
-        })
-        .catch(err => console.log(err))
-      playersRef
-      .doc(playerId)
-      .update({active: false})
-      .catch(err => console.log(err))
-    }
-
-    // Make people that leave the game inactive
-    window.addEventListener('beforeunload', e => handleUnload(e))
-    
-    
+  // Make people that leave the game inactive
+  window.addEventListener('beforeunload', e => handleUnload(e))
 
   const updateStatus = (status) => {
     changePlayer(status);
@@ -160,7 +175,7 @@ export const Game = () => {
     { card: "2", text: `${name} drink 2!` },
   ];
 
-  const startGame = (gameRoute, returningPlayer) => {
+  const startGame = (gameRoute) => {
     window.history.pushState("", "", gameRoute);
     setNewGame(false);
   };
@@ -176,8 +191,7 @@ export const Game = () => {
           snapshot.forEach(doc => {
             currentPlayers.push(doc.data())
           })
-          const currentActivePlayers = currentPlayers.filter(player => player.active)
-          setPlayerState(currentActivePlayers)
+          setPlayerState(currentPlayers)
         })
       } catch (err) {
         console.log(err)
@@ -195,6 +209,7 @@ export const Game = () => {
         startGame={startGame}
         gameRoute={gameRoute}
         setSessionPlayerName={setSessionPlayerName}
+        turnOrder={turnOrder}
       />
     );
   } else {
@@ -207,7 +222,7 @@ export const Game = () => {
             <Status status={status} />
           </GameStatusSection>
         </Column>
-        <GameInfoContainer>
+        <GameInfoContainer onClick={() => setExpanded(!rulesExpanded)} expanded={rulesExpanded}>
           <Paper>
             <Rules />
           </Paper>

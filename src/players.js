@@ -71,8 +71,9 @@ export default ({ players }) => {
         <PlayerListItem key={i} current={player.current}>
           <PlayerBox>
             <PlayerStatusBox>
+              {/* TODO: Make this stuff work
               <Thumb currentMaster={player.thumbMaster} />
-              <QuestionMaster current={player.questionMaster}>?</QuestionMaster>
+              <QuestionMaster current={player.questionMaster}>?</QuestionMaster> */}
             </PlayerStatusBox>
             {player.name}
           </PlayerBox>
