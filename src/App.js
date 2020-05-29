@@ -61,7 +61,7 @@ const GameInfoContainer = styled.div`
   top: 0;
   `
       : `
-  top: 80vh;
+  top: 85vh;
   `}
 
   ${({
