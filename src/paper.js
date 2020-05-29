@@ -1,14 +1,15 @@
-import React, { useState } from 'react'
+import React, {useState} from 'react'
 import styled from 'styled-components'
 
 const StyledPaper = styled.div`
   margin: 1rem;
   background: white;
   border-radius: 1rem;
+  position: relative;
 
-
-
-  ${({theme}) => `@media only screen and (min-width : ${theme.largeBreakpoint}px) {
+  ${({
+    theme,
+  }) => `@media only screen and (min-width : ${theme.largeBreakpoint}px) {
 
     height: 100%;
     mask-image: radial-gradient(circle at 2rem , transparent .75rem, black .75rem, black 100%), 
@@ -41,7 +42,8 @@ const StyledPaper = styled.div`
   }
 
 
-`}`
+`}
+`
 
 const PaperLines = styled.div`
   top: 15%;
@@ -51,13 +53,18 @@ const PaperLines = styled.div`
   height: 85%;
   border-bottom-right-radius: 1rem;
   border-bottom-left-radius: 1rem;
-  background: repeating-linear-gradient(white, white 2rem, #B9CEEE 2rem, #B9CEEE 2.1rem);
+  background: repeating-linear-gradient(
+    white,
+    white 2rem,
+    #b9ceee 2rem,
+    #b9ceee 2.1rem
+  );
 `
 export default ({children}) => {
   return (
-  <StyledPaper>
-    {children}
-    <PaperLines />
-  </StyledPaper>
-)
-  }
+    <StyledPaper>
+      {children}
+      <PaperLines />
+    </StyledPaper>
+  )
+}
