@@ -45,7 +45,6 @@ export const Card = styled.img`
   height: 35vmin;
   border-radius: 0.5rem;
   box-shadow: 0 0 0.25rem black;
-
   ${({ theme, rotate }) => `@media only screen and (min-width : ${
     theme.mediumBreakpoint
   }px) {
@@ -60,15 +59,12 @@ export const Card = styled.img`
 
 const CircleCard = styled(Card)`
   ${({ inPlay }) => (inPlay ? null : "display: none;")}
-
   transform: translate(0, 30vmin) rotate(${({ index }) => index * 7}deg);
   transform-origin: 45vmin center;
   cursor: pointer;
-
   &:hover {
       box-shadow: 0 0 .5rem black;
   }
-
   ${({ theme, index }) => `@media only screen and (min-width : ${
     theme.mediumBreakpoint
   }px) {
@@ -133,6 +129,19 @@ export default ({ gameId, updateStatus }) => {
   const [deckState, setDeckState] = useState(shuffle(deckArray));
   const discardPile = deckState && deckState.filter((card) => !card.inPlay);
 
+  async function newGame(gameId) {
+    await firestore
+      .collection(`/games/${gameId}/deck`)
+      .where("inPlay", "==", false)
+      .get()
+      .then((snapshot) =>
+        snapshot.forEach((doc) =>
+          firestore.collection(`/games/${gameId}/deck`).doc(doc.id).delete()
+        )
+      );
+    await setDeckState(shuffle(deckArray));
+  }
+
   const handleClick = async (card) => {
     const updateDeck = firestore
       .collection(`/games/${gameId}/deck`)
@@ -171,8 +180,6 @@ export default ({ gameId, updateStatus }) => {
     let unsub;
     function syncGame() {
       try {
-        // returned function is for unsubbing
-
         // update deck state
         unsub = firestore
           .collection(`/games/${gameId}/deck`)
@@ -222,9 +229,9 @@ export default ({ gameId, updateStatus }) => {
       {discardPile.length === 52 ? (
         <GameOver>
           <h2>GAME OVER</h2>
-          <a href="https://oofdeath.com">
+          <button onClick={() => newGame(gameId)}>
             <h2>START NEW GAME</h2>
-          </a>
+          </button>
         </GameOver>
       ) : null}
     </DeckContainer>
