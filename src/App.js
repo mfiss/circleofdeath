@@ -90,44 +90,60 @@ export const Game = () => {
   const nextPlayerIndex =
     currentPlayerIndex === turnOrder.length - 1 ? 0 : currentPlayerIndex + 1
   const nextPlayerName = turnOrder[nextPlayerIndex]?.name
+  const localGame = gameRoute === 'local'
 
   const changePlayer = (status) => {
     const cardStr = status.card || ''
-    const thumbMaster = cardStr === 'Jack'
-    const questionMaster = cardStr === 'Queen'
 
-    if (thumbMaster) {
+    // TODO: Implement Thumb Master and Question Master
+    // const thumbMaster = cardStr === 'Jack'
+    // const questionMaster = cardStr === 'Queen'
+
+    // if (thumbMaster) {
+    //   playersRef
+    //     .where('thumbMaster', '==', true)
+    //     .get()
+    //     .then((snap) =>
+    //       snap.forEach((doc) =>
+    //         playersRef.doc(doc.id).update({thumbMaster: false})
+    //       )
+    //     )
+    //     .catch((err) => console.log(err))
+    // }
+
+    // if (questionMaster) {
+    //   playersRef
+    //     .where('questionMaster', '==', true)
+    //     .get()
+    //     .then((snap) =>
+    //       snap.forEach((doc) =>
+    //         playersRef.doc(doc.id).update({questionMaster: false})
+    //       )
+    //     )
+    //     .catch((err) => console.log(err))
+    // }
+
+    if (localGame) {
+      const newPlayerState = playerState.map((player,i) => {
+        if (i === currentPlayerIndex) {
+          return ({ ...player, current: false })
+        }
+        if (i === nextPlayerIndex) {
+          return ({ ...player, current: true })
+        }
+        return player
+      })
+
+      setPlayerState(newPlayerState)
+    } else {
       playersRef
-        .where('thumbMaster', '==', true)
-        .get()
-        .then((snap) =>
-          snap.forEach((doc) =>
-            playersRef.doc(doc.id).update({thumbMaster: false})
-          )
-        )
-        .catch((err) => console.log(err))
-    }
-
-    if (questionMaster) {
-      playersRef
-        .where('questionMaster', '==', true)
-        .get()
-        .then((snap) =>
-          snap.forEach((doc) =>
-            playersRef.doc(doc.id).update({questionMaster: false})
-          )
-        )
-        .catch((err) => console.log(err))
-    }
-
-    playersRef
       .get()
       .then((snap) =>
         snap.forEach((doc) => {
           return playersRef.doc(doc.id).update({
             current: false,
-            thumbMaster: thumbMaster,
-            questionMaster: questionMaster,
+            // thumbMaster: thumbMaster,
+            // questionMaster: questionMaster,
           })
         })
       )
@@ -140,29 +156,32 @@ export const Game = () => {
         snap.forEach((doc) => playersRef.doc(doc.id).update({current: true}))
       )
       .catch((err) => console.log(err))
-  }
-  // playersRef.get().then(snap => snap.docs.forEach(doc => console.log('playersRef doc', doc.data())))
-
-  const handleUnload = (e) => {
-    e.preventDefault()
-
-    currentSessionPlayer
-      .get()
-      .then((doc) => {
-        if (doc.exists && doc.data().current) {
-          // It's the leaving player's turn, so make the next person the current player
-          changePlayer()
-        }
-      })
-      .catch((err) => console.log(err))
-    playersRef
-      .doc(playerId)
-      .update({active: false})
-      .catch((err) => console.log(err))
+    }
   }
 
-  // Make people that leave the game inactive
-  window.addEventListener('beforeunload', (e) => handleUnload(e))
+  if (!localGame) {
+    const handleUnload = (e) => {
+      e.preventDefault()
+  
+      currentSessionPlayer
+        .get()
+        .then((doc) => {
+          if (doc.exists && doc.data().current) {
+            // It's the leaving player's turn, so make the next person the current player
+            changePlayer()
+          }
+        })
+        .catch((err) => console.log(err))
+      playersRef
+        .doc(playerId)
+        .update({active: false})
+        .catch((err) => console.log(err))
+    }
+  
+    // Make people that leave the game inactive
+    window.addEventListener('beforeunload', (e) => handleUnload(e))
+  }
+  
 
   const updateStatus = (status) => {
     changePlayer(status)
@@ -202,35 +221,45 @@ export const Game = () => {
     {card: '2', text: `${name} drink 2!`},
   ]
 
-  const startGame = (gameRoute) => {
+  const startGame = (gameRoute, localPlayers) => {
     window.history.pushState('', '', gameRoute)
+    console.log('localGame', localGame, 'gameRoute', gameRoute, 'localPlayers', localPlayers)
+    if (localPlayers) {
+      const mappedPlayers = localPlayers.map((player,i) => ({ name: localPlayers[i], active: true, current: i === 0 }))
+      
+      setPlayerState(mappedPlayers)
+      console.log('playerState', playerState, 'mappedPlayers', mappedPlayers)
+    }
+    
     setNewGame(false)
   }
 
   useEffect(() => {
     // set this for unsubscribing on component unmount
-    let unsub
-    function getPlayers() {
-      try {
-        // mount the listener
-        unsub = firestore
-          .collection(`/games/${gameRoute}/players`)
-          .onSnapshot((snapshot) => {
-            let currentPlayers = []
-            snapshot.forEach((doc) => {
-              currentPlayers.push(doc.data())
+    if (!localGame){
+      let unsub
+      function getPlayers() {
+        try {
+          // mount the listener
+          unsub = firestore
+            .collection(`/games/${gameRoute}/players`)
+            .onSnapshot((snapshot) => {
+              let currentPlayers = []
+              snapshot.forEach((doc) => {
+                currentPlayers.push(doc.data())
+              })
+              setPlayerState(currentPlayers)
             })
-            setPlayerState(currentPlayers)
-          })
-      } catch (err) {
-        console.log(err)
+        } catch (err) {
+          console.log(err)
+        }
       }
+      getPlayers()
+      // unmount unsub
+      return () => unsub()
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-    getPlayers()
-    // unmount unsub
-    return () => unsub()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameRoute])
+  }, [gameRoute, localGame])
 
   if (newGame) {
     return (

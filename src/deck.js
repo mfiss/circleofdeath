@@ -55,7 +55,7 @@ const CircleCard = styled(Card)`
 `}`
 
 export default ({ gameId, updateStatus }) => {
-
+  const localGame = gameId === 'local'
   const suits = ["Hearts", "Spades", "Clubs", "Diamonds"]
   const cards = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"]
 
@@ -95,61 +95,42 @@ export default ({ gameId, updateStatus }) => {
   const discardPile = deckState && deckState.filter(card => !card.inPlay)
 
   const handleClick = async (card) => {
-     const updateDeck = firestore.collection(`/games/${gameId}/deck`)
+
+    if (localGame) {
+      const newDeckState = deckState.map(c => c.card === card.card && c.suit === card.suit ? ({ ...c, inPlay: false, index: discardPile.length}) : c)
+      setDeckState(newDeckState)
+      updateStatus(card)
+    } else {
+      await firestore.collection(`/games/${gameId}/deck`)
       .where('card', '==', card.card)
       .where('suit', '==', card.suit)
       .get()
       .then(snapshot => snapshot.forEach(doc => firestore.collection(`/games/${gameId}/deck`).doc(doc.id).update({inPlay: false, index: discardPile.length })))
       .catch(err => console.log(err))
-      // TODO: Do we need these here?
-    // let player = {}
-    // const updatePlayers = firestore.collection(`/games/${gameId}/players`)
-    // .get()
-    // .then(snapshot => {
-    //   const playerDocs = snapshot.docs.map(doc => doc.data())
-    // })
-    // .catch(err => console.log(err))
     updateStatus(card)
+    }
 
-    // const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc('currentStatus').set({...card})
-
-      await Promise.all([
-        updateDeck,
-        // updatePlayers,
-        // updateCurrentStatus
-      ])
   }
 
   useEffect(() => {
-    let unsub
-    function syncGame() {
-      try {
-        // returned function is for unsubbing
-
-        // update deck state
-        unsub = firestore.collection(`/games/${gameId}/deck`).onSnapshot(snapshot => {
-          const deckState = snapshot.docs.map(doc => doc.data())
-          if (deckState) {
-            setDeckState(deckState)
-          }
-        })
-
-        // update current card state
-        // firestore.collection(`/games/${gameId}/currentStatus`).onSnapshot(snapshot => {
-        //   const currentStatus = snapshot.docs.map(doc => doc.data())[0]
-        //   if (currentStatus) {
-        //     console.log('CURRENT STATUS', currentStatus, 'snapshot docs', snapshot.docs.map(doc => doc.data()))
-        //   }
-        // })
-      } catch (err) {
-        console.log(err)
+    if (!localGame) {
+      let unsub
+      function syncGame() {
+        try {
+          unsub = firestore.collection(`/games/${gameId}/deck`).onSnapshot(snapshot => {
+            const deckState = snapshot.docs.map(doc => doc.data())
+              setDeckState(deckState)
+          })
+        } catch (err) {
+          console.log(err)
+        }
       }
+      syncGame()
+      // need this to unsub when component unmounts
+      return () => unsub()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-    syncGame()
-    // need this to unsub when component unmounts
-    return () => unsub()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [gameId, localGame])
 
   return (
     <DeckContainer>

@@ -138,10 +138,20 @@ export const ExpandRulesText = styled(RulesTab)`
   `}
 `
 
+export const MobileRules = styled.div`
+  display: none;
+  ${({theme}) => `
+    @media only screen and (max-width : ${theme.largeBreakpoint - 1}px) {
+      display: block;
+      margin: auto;
+    }
+  `}
+`
+
 export const DesktopRules = styled.div`
   display: none;
   ${({theme}) => `
-    @media only screen and (min-width : ${theme.largeBreakpoint - 1}px) {
+    @media only screen and (min-width : ${theme.largeBreakpoint}px) {
       display: block;
     }
   `}
@@ -150,7 +160,9 @@ export const DesktopRules = styled.div`
 export default ({rulesExpanded}) => (
   <>
     {rulesExpanded ? (
-      <CommonRules />
+      <MobileRules>
+        <CommonRules />
+      </MobileRules>
     ) : (
       <ExpandRulesText>
         <h2>Click to view rules</h2>

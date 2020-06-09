@@ -64,28 +64,88 @@ const Error = styled.div`
 
 const Skull = () => <img src={SkullGif} alt="Spinning Skull" />;
 
+export const sanitizeName = (value, setError) => {
+  let funValue = value;
+  if (funValue.match(/[^a-z0-9áéíóúñü .,_-]/gim, "")) {
+    setError("Wow such fancy characters. Try some regular letters, nerd");
+    funValue = "Nerd";
+  }
+
+  if (value.length > 15) {
+    setError("Use a shorter name, Dingus");
+
+    funValue = "Dingus";
+  }
+
+  return funValue
+    .replace(/[^a-z0-9áéíóúñü .,_-]/gim, "")
+    .trim()
+    .slice(0, 15);
+}
+
+
+export const NewOnlineGame = ({name, checkForName, error, gameRoute, addName }) => (
+<>
+      Enter Name:
+      <NameInput
+        value={name}
+        onKeyDown={({key}) => key === 'Enter' ? checkForName(gameRoute) : null}
+        onChange={({ target: { value } }) => addName(value)}
+      />
+      {gameRoute ? (
+        <NewGameButton onClick={() => checkForName(gameRoute)}>
+          Join Game
+        </NewGameButton>
+      ) : (
+          <NewGameButton onClick={() => checkForName(gameRoute)}>
+            Start New Game
+          </NewGameButton>
+        )}
+      <Error>{error}</Error>
+    </>
+)
+
+export const NewLocalGame = ({ error, setError, startGame }) => {
+  const [localNames, setLocalNames ] = useState([])
+  const [currentName, setCurrentName] = useState('')
+
+  const deleteName = (index) => setLocalNames(localNames.filter((n, i) => i !== index))
+
+  const maybeStartGame = () => {
+    localNames.length > 0 ? startGame('local', localNames) : setError('Add some players first.')
+  }
+
+  return (
+  <>
+  Enter Names:
+  { localNames.map((name,i) => (
+    <div key={JSON.stringify(name)}>
+    {name} <button onClick={() => deleteName(i)}>Delete</button>
+    </div>
+  ))}
+  <NameInput
+        value={currentName}
+        onKeyDown={({key}) => key === 'Enter' ? (setLocalNames([ ...localNames, currentName]), setCurrentName('')) : null}
+        onChange={({ target: { value } }) => setCurrentName(sanitizeName(value, setError))}
+      />
+      <button onClick={() => (setLocalNames([ ...localNames, currentName]), setCurrentName(''))}>Add Name</button>
+
+<Error>{error}</Error>
+
+<button onClick={() => maybeStartGame()}>Start Game</button>
+  </>
+  )
+}
+
 const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName, turnOrder }) => {
+
+  const [gameMode, setGameMode] = useState(gameRoute && gameRoute !== 'local' ? 'online' : '');
   const [name, setName] = useState("");
   const [error, setError] = useState([]);
 
-  const sanitizeName = (value) => {
+  const addName = (value) => {
     setError([]);
-    let funValue = value;
-    if (funValue.match(/[^a-z0-9áéíóúñü .,_-]/gim, "")) {
-      setError("Wow such fancy characters. Try some regular letters, nerd");
-      funValue = "Nerd";
-    }
-
-    if (value.length > 15) {
-      setError("Use a shorter name, Dingus");
-
-      funValue = "Dingus";
-    }
-
-    const sanitizedName = funValue
-      .replace(/[^a-z0-9áéíóúñü .,_-]/gim, "")
-      .trim()
-      .slice(0, 15);
+      const sanitizedName = sanitizeName(value, setError)
 
       if (turnOrder.includes(sanitizedName)) {
         setError('Name is already in use')
@@ -179,6 +239,12 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName, turnOrder })
     }
   };
   
+  const checkForLocalNames = ({localNames}) => {
+    if (localNames.length > 0) {
+
+    }
+  }
+
   useEffect(() => {
     function moveAlongNow(gameRoute) {
       const playerId = localStorage.getItem('playerId')
@@ -194,7 +260,7 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName, turnOrder })
                   setError('Name is already in use')
                 }
                 players.doc(playerId).update({ active: true})
-                startGame(gameRoute, playerIsReturning)
+                startGame(gameRoute)
               }
             }).catch(err => console.log(err))
           }
@@ -204,26 +270,30 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName, turnOrder })
     moveAlongNow(gameRoute)
   }, [gameRoute, startGame, turnOrder])
 
+  if (gameMode) {
+    return gameMode === 'online' ? (
+    <NewOnlineGame
+      name={name}
+      checkForName={checkForName} 
+      error={error}
+      gameRoute={gameRoute}
+      addName={addName}
+    />) : (
+      <NewLocalGame
+        setError={setError}
+        error={error} 
+        startGame={startGame}
+      />
+    )
+  }
   return (
     <>
-      Enter Name:
-      <NameInput
-        value={name}
-        onKeyDown={({key}) => key === 'Enter' ? checkForName(gameRoute) : null}
-        onChange={({ target: { value } }) => sanitizeName(value)}
-      />
-      {gameRoute ? (
-        <NewGameButton onClick={() => checkForName(gameRoute)}>
-          Join Game
-        </NewGameButton>
-      ) : (
-          <NewGameButton onClick={() => checkForName(gameRoute)}>
-            Start New Game
-          </NewGameButton>
-        )}
-      <Error>{error}</Error>
+    <button onClick={() => setGameMode('local')}>New Local Game</button>
+    <p>Enter all players and run the game locally in one browser</p>
+    <button onClick={() => setGameMode('online')}>New Online Game</button>
+    <p>Share a custom URL with your friends to play together online</p>
     </>
-  );
+  )
 };
 
 export default ({ startGame, gameRoute, setSessionPlayerName, turnOrder }) => {
