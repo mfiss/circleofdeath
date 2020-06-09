@@ -1,8 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import Cards from './cards';
-import get from 'lodash.get';
-import { firestore } from './firebase'
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import Cards from "./cards";
+import get from "lodash.get";
+import { firestore } from "./firebase";
+
+const GameOver = styled.div`
+  box-sizing: border-box;
+  background-color: black;
+  display: flex;
+  flex-direction: column;
+  padding: 32px;
+  width: 100%;
+  height: 100%;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+`;
 
 const DeckContainer = styled.div`
   margin: auto;
@@ -11,34 +24,42 @@ const DeckContainer = styled.div`
   height: 95vmin;
   width: 90vmin;
 
-  ${({ theme }) => `@media only screen and (min-width: ${theme.mediumBreakpoint}px) {
+  ${({
+    theme,
+  }) => `@media only screen and (min-width: ${theme.mediumBreakpoint}px) {
   height: ${theme.mediumBreakpoint}px;
   width: ${theme.mediumBreakpoint}px;
   }
-`}`
+`}
+`;
 
 export const Card = styled.img`
   background: red;
-  position:absolute;
-  margin:0;
-  padding:0;
+  position: absolute;
+  margin: 0;
+  padding: 0;
   z-index: ${({ index }) => index || 0};
   transform: translate(34vmin, 30vmin) rotate(${({ rotate }) => rotate}deg);
-  overflow:hidden;
+  overflow: hidden;
   width: 22.5vmin;
   height: 35vmin;
-  border-radius: .5rem;
-  box-shadow: 0 0 .25rem black;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0.25rem black;
 
-  ${({ theme, rotate }) => `@media only screen and (min-width : ${theme.mediumBreakpoint}px) {
-    transform: translate(${theme.mediumBreakpoint / 2.65}px, ${theme.mediumBreakpoint / 3.25}px) rotate(${rotate}deg);
+  ${({ theme, rotate }) => `@media only screen and (min-width : ${
+    theme.mediumBreakpoint
+  }px) {
+    transform: translate(${theme.mediumBreakpoint / 2.65}px, ${
+    theme.mediumBreakpoint / 3.25
+  }px) rotate(${rotate}deg);
     width: ${theme.mediumBreakpoint / 4.5}px;
     height: ${theme.mediumBreakpoint / 3}px;
   }
-`}`
+`}
+`;
 
 const CircleCard = styled(Card)`
-  ${({ inPlay }) => inPlay ? null : 'display: none;'}
+  ${({ inPlay }) => (inPlay ? null : "display: none;")}
 
   transform: translate(0, 30vmin) rotate(${({ index }) => index * 7}deg);
   transform-origin: 45vmin center;
@@ -48,37 +69,55 @@ const CircleCard = styled(Card)`
       box-shadow: 0 0 .5rem black;
   }
 
-  ${({ theme, index }) => `@media only screen and (min-width : ${theme.mediumBreakpoint}px) {
+  ${({ theme, index }) => `@media only screen and (min-width : ${
+    theme.mediumBreakpoint
+  }px) {
     transform-origin: ${theme.mediumBreakpoint / 2.25}px center;
-    transform: translate(${theme.mediumBreakpoint / 20}px, ${theme.mediumBreakpoint / 3.3}px) rotate(${index * 7}deg);
+    transform: translate(${theme.mediumBreakpoint / 20}px, ${
+    theme.mediumBreakpoint / 3.3
+  }px) rotate(${index * 7}deg);
   }
-`}`
+`}`;
 
 export default ({ gameId, updateStatus }) => {
+  const suits = ["Hearts", "Spades", "Clubs", "Diamonds"];
+  const cards = [
+    "Ace",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "Jack",
+    "Queen",
+    "King",
+  ];
 
-  const suits = ["Hearts", "Spades", "Clubs", "Diamonds"]
-  const cards = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"]
-
-  const deckArray = []
-  suits.forEach(suit => {
-    cards.forEach(card => {
+  const deckArray = [];
+  suits.forEach((suit) => {
+    cards.forEach((card) => {
       deckArray.push({
         card,
-        color: (suit === "Hearts" || suit === "Diamonds") ? 'red' : 'black',
+        color: suit === "Hearts" || suit === "Diamonds" ? "red" : "black",
         inPlay: true,
         suit,
         image: null,
-        rotate: parseInt(Math.random() * 360)
-      })
-    })
-  })
+        rotate: parseInt(Math.random() * 360),
+      });
+    });
+  });
 
-  const shuffle = array => {
-    var currentIndex = array.length, temporaryValue, randomIndex;
+  const shuffle = (array) => {
+    var currentIndex = array.length,
+      temporaryValue,
+      randomIndex;
 
     // While there remain elements to shuffle...
     while (0 !== currentIndex) {
-
       // Pick a remaining element...
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex -= 1;
@@ -89,19 +128,27 @@ export default ({ gameId, updateStatus }) => {
       array[randomIndex] = temporaryValue;
     }
     return array;
-  }
+  };
 
-  const [deckState, setDeckState] = useState(shuffle(deckArray))
-  const discardPile = deckState && deckState.filter(card => !card.inPlay)
+  const [deckState, setDeckState] = useState(shuffle(deckArray));
+  const discardPile = deckState && deckState.filter((card) => !card.inPlay);
 
   const handleClick = async (card) => {
-     const updateDeck = firestore.collection(`/games/${gameId}/deck`)
-      .where('card', '==', card.card)
-      .where('suit', '==', card.suit)
+    const updateDeck = firestore
+      .collection(`/games/${gameId}/deck`)
+      .where("card", "==", card.card)
+      .where("suit", "==", card.suit)
       .get()
-      .then(snapshot => snapshot.forEach(doc => firestore.collection(`/games/${gameId}/deck`).doc(doc.id).update({inPlay: false, index: discardPile.length })))
-      .catch(err => console.log(err))
-      // TODO: Do we need these here?
+      .then((snapshot) =>
+        snapshot.forEach((doc) =>
+          firestore
+            .collection(`/games/${gameId}/deck`)
+            .doc(doc.id)
+            .update({ inPlay: false, index: discardPile.length })
+        )
+      )
+      .catch((err) => console.log(err));
+    // TODO: Do we need these here?
     // let player = {}
     // const updatePlayers = firestore.collection(`/games/${gameId}/players`)
     // .get()
@@ -109,30 +156,32 @@ export default ({ gameId, updateStatus }) => {
     //   const playerDocs = snapshot.docs.map(doc => doc.data())
     // })
     // .catch(err => console.log(err))
-    updateStatus(card)
+    updateStatus(card);
 
     // const updateCurrentStatus = firestore.collection(`/games/${gameId}/currentStatus`).doc('currentStatus').set({...card})
 
-      await Promise.all([
-        updateDeck,
-        // updatePlayers,
-        // updateCurrentStatus
-      ])
-  }
+    await Promise.all([
+      updateDeck,
+      // updatePlayers,
+      // updateCurrentStatus
+    ]);
+  };
 
   useEffect(() => {
-    let unsub
+    let unsub;
     function syncGame() {
       try {
         // returned function is for unsubbing
 
         // update deck state
-        unsub = firestore.collection(`/games/${gameId}/deck`).onSnapshot(snapshot => {
-          const deckState = snapshot.docs.map(doc => doc.data())
-          if (deckState) {
-            setDeckState(deckState)
-          }
-        })
+        unsub = firestore
+          .collection(`/games/${gameId}/deck`)
+          .onSnapshot((snapshot) => {
+            const deckState = snapshot.docs.map((doc) => doc.data());
+            if (deckState) {
+              setDeckState(deckState);
+            }
+          });
 
         // update current card state
         // firestore.collection(`/games/${gameId}/currentStatus`).onSnapshot(snapshot => {
@@ -142,25 +191,43 @@ export default ({ gameId, updateStatus }) => {
         //   }
         // })
       } catch (err) {
-        console.log(err)
+        console.log(err);
       }
     }
-    syncGame()
+    syncGame();
     // need this to unsub when component unmounts
-    return () => unsub()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    return () => unsub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <DeckContainer>
-      {discardPile.map((card, i) => <Card key={JSON.stringify(card)} src={get(Cards, `${card.suit}${card.card}`)} index={card.index} rotate={card.rotate} />)}
-      {deckState.map((card, i) =>
+      {discardPile.map((card, i) => (
+        <Card
+          key={JSON.stringify(card)}
+          src={get(Cards, `${card.suit}${card.card}`)}
+          index={card.index}
+          rotate={card.rotate}
+        />
+      ))}
+      {deckState.map((card, i) => (
         <CircleCard
           key={JSON.stringify(card)}
-          src={Cards.CardBack} 
+          src={Cards.CardBack}
           index={i}
           inPlay={card.inPlay}
-          onClick={() => handleClick(card)} />)}
+          onClick={() => handleClick(card)}
+        />
+      ))}
+      {discardPile.length === 52 ? (
+        <GameOver>
+          <h2>GAME OVER</h2>
+          <a href="https://oofdeath.com">
+            <h2>START NEW GAME</h2>
+          </a>
+        </GameOver>
+      ) : null}
     </DeckContainer>
-  )
-}
+  );
+};
+
