@@ -136,10 +136,12 @@ export default ({ gameId, updateStatus }) => {
       .get()
       .then((snapshot) =>
         snapshot.forEach((doc) =>
-          firestore.collection(`/games/${gameId}/deck`).doc(doc.id).delete()
+          firestore
+            .collection(`/games/${gameId}/deck`)
+            .doc(doc.id)
+            .update({ inPlay: true, index: discardPile.length })
         )
       );
-    await setDeckState(shuffle(deckArray));
   }
 
   const handleClick = async (card) => {
