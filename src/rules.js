@@ -1,12 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
+import Paper from './paper'
 
 const RulesTab = styled.div`
-  position: relative;
+  font-size: 1.25rem;
+  position: absolute;
   padding: 1rem;
-  font-family: 'Caveat', cursive;
   text-align: left;
-  z-index: 69;
+  z-index: 100;
+  top: 0;
   bottom: 0;
 
   h2 {
@@ -16,14 +18,14 @@ const RulesTab = styled.div`
   ${({
     theme,
   }) => `@media only screen and (min-width : ${theme.largeBreakpoint}px) {
-      padding-left: 17%;
+      padding: 1rem 15% 0 17%;
       margin: auto;
     }
 
 
     > ul {
       padding: 0;
-      z-index: 69;
+      z-index: 5;
 
       > li > h3 {
         display: inline;
@@ -82,11 +84,11 @@ export const CommonRules = () => (
       </li>
       <li>
         <p>
-          <Em>Jack - Thumb Master</Em> You are now the Thumb Master. This means
+          <Em>Jack - Thumb Master</Em> You are now the Thumb Master. Traditionally this means
           that you can place your Thumb on the table at any time and all other
-          players must race to do the same. The last player with his or her
+          players must race to do the same. The last player with their
           thumb on the table must drink. You remain Thumb master until someone
-          else draws a Jack. (in-game functionality to come!)
+          else draws a Jack.
         </p>
       </li>
       <li>
@@ -128,36 +130,8 @@ export const CommonRules = () => (
   </RulesTab>
 )
 
-export const ExpandRulesText = styled(RulesTab)`
-  display: none;
-  ${({theme}) => `
-    @media only screen and (max-width : ${theme.largeBreakpoint - 1}px) {
-      display: block;
-      margin: auto;
-    }
-  `}
-`
-
-export const DesktopRules = styled.div`
-  display: none;
-  ${({theme}) => `
-    @media only screen and (min-width : ${theme.largeBreakpoint - 1}px) {
-      display: block;
-    }
-  `}
-`
-
-export default ({rulesExpanded}) => (
-  <>
-    {rulesExpanded ? (
+export default () => (
+  <Paper>
       <CommonRules />
-    ) : (
-      <ExpandRulesText>
-        <h2>Click to view rules</h2>
-      </ExpandRulesText>
-    )}
-    <DesktopRules>
-      <CommonRules />
-    </DesktopRules>
-  </>
+  </Paper>
 )
