@@ -1,78 +1,28 @@
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
 import SkullGif from "./skull.gif";
 import { firestore } from "./firebase";
+import { 
+  Error,
+  GameTitle,
+  NameInput,
+  NewGameBackground,
+  StyledButton,
+  TitleBackground
+} from './styled'
 
-export const NewGameBackground = styled.div`
-  font-family: "UnifrakturMaguntia", cursive;
-  font-size: 2rem;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  height: 100%;
-  background-color: black;
-`;
 
-export const GameTitle = styled.h1`
-  font-family: "UnifrakturMaguntia", cursive;
-  color: red;
-  font-size: 6rem;
-  margin: 0;
-`;
-
-export const TitleBackground = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
-
-  > img {
-    padding: 1rem;
-    align-self: center;
-  }
-`;
-
-export const NewGameButton = styled.button`
-  cursor: pointer;
-  font-family: "UnifrakturMaguntia", cursive;
-  color: white;
-  border: none;
-  background: none;
-  font-size: 1.5rem;
-`;
-
-export const NameInput = styled.input`
-  font-family: "UnifrakturMaguntia", cursive;
-  font-size: 2rem;
-  background: black;
-  margin: auto;
-  margin-bottom: 1rem;
-  color: white;
-  text-align: center;
-  border-left: none;
-  border-right: none;
-  border-top: none;
-  width: 50%;
-`;
-
-const Error = styled.div`
-  color: red;
-  font-size: 1.25rem;
-`;
 
 const Skull = () => <img src={SkullGif} alt="Spinning Skull" />;
 
 export const sanitizeName = (value, setError) => {
   let funValue = value;
   if (funValue.match(/[^a-z0-9áéíóúñü .,_-]/gim, "")) {
-    setError("Wow such fancy characters. Try some regular letters, nerd");
+    setError('Please only use alphanumerical characters (A-Z, 0-9)');
     funValue = "Nerd";
   }
 
   if (value.length > 15) {
-    setError("Use a shorter name, Dingus");
+    setError("Please keep name under 15 characters");
 
     funValue = "Dingus";
   }
@@ -93,17 +43,19 @@ export const NewOnlineGame = ({name, checkForName, error, gameRoute, addName }) 
         onChange={({ target: { value } }) => addName(value)}
       />
       {gameRoute ? (
-        <NewGameButton onClick={() => checkForName(gameRoute)}>
+        <StyledButton onClick={() => checkForName(gameRoute)}>
           Join Game
-        </NewGameButton>
+        </StyledButton>
       ) : (
-          <NewGameButton onClick={() => checkForName(gameRoute)}>
+          <StyledButton onClick={() => checkForName(gameRoute)}>
             Start New Game
-          </NewGameButton>
+          </StyledButton>
         )}
       <Error>{error}</Error>
     </>
 )
+
+
 
 export const NewLocalGame = ({ error, setError, startGame }) => {
   const [localNames, setLocalNames ] = useState([])
@@ -115,24 +67,35 @@ export const NewLocalGame = ({ error, setError, startGame }) => {
     localNames.length > 0 ? startGame('local', localNames) : setError('Add some players first.')
   }
 
+  function processCurrentName() {
+    if (!currentName) {
+      setError('Please enter some characters')
+      return
+    }
+    setError('')
+    setLocalNames([ ...localNames, currentName])
+    setCurrentName('')
+  }
+
   return (
   <>
-  Enter Names:
+  { localNames.length > 0 && 'Current Players:'}
   { localNames.map((name,i) => (
     <div key={JSON.stringify(name)}>
-    {name} <button onClick={() => deleteName(i)}>Delete</button>
+    {name} <StyledButton onClick={() => deleteName(i)}>Delete</StyledButton>
     </div>
   ))}
+  Enter Player Name:
   <NameInput
         value={currentName}
-        onKeyDown={({key}) => key === 'Enter' ? (setLocalNames([ ...localNames, currentName]), setCurrentName('')) : null}
+        onKeyDown={({key}) => key === 'Enter' && processCurrentName()}
         onChange={({ target: { value } }) => setCurrentName(sanitizeName(value, setError))}
       />
-      <button onClick={() => (setLocalNames([ ...localNames, currentName]), setCurrentName(''))}>Add Name</button>
+     <div><StyledButton onClick={() => processCurrentName()}>Add Player</StyledButton></div>
 
 <Error>{error}</Error>
 
-<button onClick={() => maybeStartGame()}>Start Game</button>
+<div><StyledButton onClick={() => maybeStartGame()}>Start Game</StyledButton></div>
   </>
   )
 }
@@ -238,12 +201,6 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName, turnOrder })
       setError("Enter a name first");
     }
   };
-  
-  const checkForLocalNames = ({localNames}) => {
-    if (localNames.length > 0) {
-
-    }
-  }
 
   useEffect(() => {
     function moveAlongNow(gameRoute) {
@@ -253,7 +210,7 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName, turnOrder })
           const active = doc.data()?.active
           if (active) {
             const players = firestore.collection('games').doc(`${gameRoute}`).collection('players')
-            const playerIsReturning = players.doc(playerId).get()
+            players.doc(playerId).get()
             .then(doc => {
               if (doc.exists) {
                 if (turnOrder.includes(doc.data()?.name)) {
@@ -287,12 +244,12 @@ const NewGameSetup = ({ startGame, gameRoute, setSessionPlayerName, turnOrder })
     )
   }
   return (
-    <>
-    <button onClick={() => setGameMode('local')}>New Local Game</button>
-    <p>Enter all players and run the game locally in one browser</p>
-    <button onClick={() => setGameMode('online')}>New Online Game</button>
+    <div>
+    <StyledButton onClick={() => setGameMode('local')}>Start New Local Game</StyledButton>
+    <p>Enter player names and run the game locally in one browser</p>
+    <StyledButton onClick={() => setGameMode('online')}>Start New Online Game</StyledButton>
     <p>Share a custom URL with your friends to play together online</p>
-    </>
+    </div>
   )
 };
 

@@ -1,85 +1,38 @@
-import React, {useState, useEffect} from 'react'
-import styled, {ThemeProvider} from 'styled-components'
-import Status from './status'
+import React, { useEffect, useRef, useState} from 'react'
+import { ThemeProvider } from 'styled-components'
 import Players from './players'
-import Paper from './paper'
 import Rules from './rules'
 import Deck from './deck'
 import NewGame from './newGame'
 import globalStyles from './globalStyles'
-import {firestore} from './firebase'
-
-export const Table = styled.div`
-  margin: auto;
-  max-width: 1800px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-`
-
-const Column = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-
-  @media only screen and (min-width: ${({theme}) => theme.largeBreakpoint}px) {
-    max-height: 100%;
-    width: 50%;
-  }
-`
-
-const GameStatusSection = styled.div`
-  margin: 1rem 1rem 0 1rem;
-  padding: 1rem;
-  border-radius: 1rem;
-  background: white;
-  font-family: 'Caveat', cursive;
-  text-align: center;
-  justify-content: space-around;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-
-  h1 {
-    margin: 0;
-  }
-`
-
-const GameInfoContainer = styled.div`
-  flex: 1 1 50%;
-  font-family: 'Caveat', cursive;
-  z-index: 420;
-  position: absolute;
-  right: 0;
-  left: 0;
-  bottom: 0;
-
-  ${({expanded}) =>
-    expanded
-      ? `
-  top: 0;
-  `
-      : `
-  top: 85vh;
-  `}
-
-  ${({
-    theme,
-  }) => `@media only screen and (min-width : ${theme.largeBreakpoint}px) {
-    position: relative;
-    top: 0;
-  }`}
-`
+import { firestore } from './firebase'
+import Nav from './nav'
+import {
+  Table,
+  GameStatusSection,
+  GameplaySection,
+  Overlay,
+  StyledButton,
+  Wrapper
+} from './styled'
 
 export const Game = () => {
   const path = window.location.pathname
-  const gameRoute = path !== '/' && path.slice(1)
+  let gameRoute = path !== '/' && path.slice(1)
+  // The intention was to use this to determine who can pick the next card
+  // However, it seems fine to let any player pick the next card in case someone AFKs or whatever
+  // So I'm just leaving this here for now
   const [sessionPlayerName, setSessionPlayerName] = useState(null)
-  const [newGame, setNewGame] = useState(!sessionPlayerName)
+  const [newGame, setNewGame] = useState(true)
   const [status, setStatus] = useState('Start picking cards!')
-  const [rulesExpanded, setExpanded] = useState(false)
+  const [rulesExpanded, setRulesExpanded] = useState(false)
+  const [returnHomeExpanded, setReturnHomeExpanded] = useState(false)
+  const [size, setSize] = useState({
+    height: window.innerHeight,
+    width: window.innerWidth
+  })
   const [playerState, setPlayerState] = useState([])
+  const [gameOver, setGameOver] = useState(false)
   const currentPlayer = playerState.find((p) => p.current)
   const {name} = currentPlayer || {}
   const playerId = localStorage.getItem('playerId')
@@ -91,37 +44,62 @@ export const Game = () => {
     currentPlayerIndex === turnOrder.length - 1 ? 0 : currentPlayerIndex + 1
   const nextPlayerName = turnOrder[nextPlayerIndex]?.name
   const localGame = gameRoute === 'local'
+  const localGameInProgress = localStorage.getItem('playerState')
+  const gameContainerRef = useRef(null)
+
+function returnHome() {
+  setSessionPlayerName(null)
+  localStorage.removeItem('playerState')
+  localStorage.removeItem('deckState')
+  document.location.href = '/'
+}
+
+function ConfirmReturnHome() {
+  return (
+    <Overlay>
+      <p>Returning home will exit your current game.</p>
+      {localGame && <p>This will end your current local session.</p>}
+      <p>Are you sure?</p>
+      <div>
+        <StyledButton onClick={() => returnHome()}>Yes</StyledButton>
+        <StyledButton onClick={() => setReturnHomeExpanded(false)}>Cancel</StyledButton>
+      </div>
+    </Overlay>
+  )
+}
+
+function GameOver() {
+  return (
+    <Overlay>
+      <p>The game is over! I hope you had fun.</p>
+        <StyledButton onClick={() => returnHome()}>Return Home</StyledButton>
+    </Overlay>
+  )
+}
+
+
+  useEffect(() => {
+    if (localGameInProgress ) {
+      setPlayerState(JSON.parse(localGameInProgress))
+      window.history.pushState('', '', 'local')
+      setNewGame(false)
+    }
+  },[localGameInProgress])
+
+  useEffect(() => {
+    function updateSize() {
+      console.log('UPDATING SIZE')
+      setSize({
+        height: window.innerHeight,
+        width: window.innerWidth
+      })
+    }
+      window.addEventListener('resize', updateSize);
+      updateSize();
+      return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   const changePlayer = (status) => {
-    const cardStr = status.card || ''
-
-    // TODO: Implement Thumb Master and Question Master
-    // const thumbMaster = cardStr === 'Jack'
-    // const questionMaster = cardStr === 'Queen'
-
-    // if (thumbMaster) {
-    //   playersRef
-    //     .where('thumbMaster', '==', true)
-    //     .get()
-    //     .then((snap) =>
-    //       snap.forEach((doc) =>
-    //         playersRef.doc(doc.id).update({thumbMaster: false})
-    //       )
-    //     )
-    //     .catch((err) => console.log(err))
-    // }
-
-    // if (questionMaster) {
-    //   playersRef
-    //     .where('questionMaster', '==', true)
-    //     .get()
-    //     .then((snap) =>
-    //       snap.forEach((doc) =>
-    //         playersRef.doc(doc.id).update({questionMaster: false})
-    //       )
-    //     )
-    //     .catch((err) => console.log(err))
-    // }
 
     if (localGame) {
       const newPlayerState = playerState.map((player,i) => {
@@ -135,6 +113,7 @@ export const Game = () => {
       })
 
       setPlayerState(newPlayerState)
+      localStorage.setItem('playerState', JSON.stringify(newPlayerState))
     } else {
       playersRef
       .get()
@@ -223,12 +202,10 @@ export const Game = () => {
 
   const startGame = (gameRoute, localPlayers) => {
     window.history.pushState('', '', gameRoute)
-    console.log('localGame', localGame, 'gameRoute', gameRoute, 'localPlayers', localPlayers)
     if (localPlayers) {
       const mappedPlayers = localPlayers.map((player,i) => ({ name: localPlayers[i], active: true, current: i === 0 }))
-      
+      localStorage.setItem('playerState', JSON.stringify(mappedPlayers))
       setPlayerState(mappedPlayers)
-      console.log('playerState', playerState, 'mappedPlayers', mappedPlayers)
     }
     
     setNewGame(false)
@@ -272,39 +249,33 @@ export const Game = () => {
     )
   } else {
     return (
-      <Table>
-        <Column>
-          <Deck gameId={gameRoute} updateStatus={updateStatus} />
-          <GameStatusSection>
-            <Players players={playerState} />
-            <Status status={status} />
-          </GameStatusSection>
-        </Column>
-        <GameInfoContainer
-          onClick={() => setExpanded(!rulesExpanded)}
-          expanded={rulesExpanded}
-        >
-          <Paper>
-            <Rules rulesExpanded={rulesExpanded} />
-          </Paper>
-        </GameInfoContainer>
+      <Table height={size.height}>
+        {gameOver && <GameOver />}
+        <GameStatusSection>
+          <Players players={playerState} />
+          <hr />
+          { status }
+        </GameStatusSection>
+        <GameplaySection ref={gameContainerRef}>
+          {returnHomeExpanded && <ConfirmReturnHome />}
+          {rulesExpanded && <div onClick={() => setRulesExpanded(false)}><Rules /></div>}
+          <Deck gameId={gameRoute} setGameOver={setGameOver} updateStatus={updateStatus} gameContainerRef={gameContainerRef} />
+        </GameplaySection>
+        <Nav 
+          rulesExpanded={rulesExpanded}
+          setRulesExpanded={setRulesExpanded}
+          localGame={localGame}
+          setReturnHomeExpanded={setReturnHomeExpanded}
+        />
       </Table>
     )
   }
 }
 
-export const GameContainer = styled.section`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-`
-
 export default () => (
   <ThemeProvider theme={globalStyles}>
-    <GameContainer>
+    <Wrapper>
       <Game />
-    </GameContainer>
+    </Wrapper>
   </ThemeProvider>
 )
