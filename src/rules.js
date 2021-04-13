@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import Paper from './paper'
 
 const RulesTab = styled.div`
-  font-size: 1.25rem;
   position: absolute;
   padding: 1rem;
   text-align: left;
