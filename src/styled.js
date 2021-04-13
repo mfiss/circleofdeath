@@ -25,7 +25,6 @@ export const GameStatusSection = styled.section`
   display: flex;
   flex-direction: column;
   flex: 0 2 0;
-  font-size: 2rem;
   justify-content: space-around;
   text-align: center;
 
@@ -39,21 +38,18 @@ export const GameStatusSection = styled.section`
 
 export const GameTitle = styled.h1`
   color: red;
-  font-size: 10vw;
+  font-size: 2.5rem;
   margin: 0;
 `;
 
 export const NameInput = styled.input`
-  font-size: 2rem;
   background: black;
-  margin: auto;
-  margin-bottom: 1rem;
+  margin: 1rem auto;
   color: white;
   text-align: center;
   border-left: none;
   border-right: none;
   border-top: none;
-  width: 50%;
 `;
 
 export const NewGameBackground = styled.div`
@@ -62,7 +58,6 @@ export const NewGameBackground = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  font-size: 2rem;
   color: white;
   display: flex;
   flex-direction: column;
@@ -86,7 +81,6 @@ export const Overlay = styled.div`
   color: white;
   display: flex;
   flex-direction: column;
-  font-size: 2rem;
   justify-content: center;
   text-align: center;
   z-index: 100;
@@ -99,7 +93,7 @@ export const StyledButton = styled.button`
   cursor: pointer;
   color: white;
   display: inline-block;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   padding: .5rem 1rem;
   margin: .5rem;
 

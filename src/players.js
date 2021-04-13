@@ -9,7 +9,7 @@ const PlayersList = styled.ul`
   justify-content: space-around;
   margin: 0;
   padding: 0;
-  font-size: 2rem;
+  font-size: 1.5rem;
 `;
 
 const PlayerListItem = styled.li`
